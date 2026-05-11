@@ -15,6 +15,14 @@ const Login = () => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState('Other');
+  const [contactNumber, setContactNumber] = useState('');
+  const [address, setAddress] = useState('');
+  const [specialization, setSpecialization] = useState('');
+  const [qualifications, setQualifications] = useState('');
+  const [experienceYears, setExperienceYears] = useState('');
+  const [consultationFee, setConsultationFee] = useState('');
 
   const { login, register } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -32,32 +40,43 @@ const Login = () => {
       } else {
         // Signup Flow
         if (role === 'Patient') {
+          if (!dob || !contactNumber || !address) {
+            toast.error('Please fill DOB, phone number, and address.');
+            return;
+          }
           const userData = {
             email,
             password,
             role,
             firstName,
             lastName,
-            dob: '1990-01-01',
-            gender: 'Other',
-            contactNumber: '0000000000',
-            address: 'N/A',
+            dob,
+            gender,
+            contactNumber,
+            address,
           };
-          const data = await register(userData);
+          await register(userData);
           toast.success('Account created successfully!');
           navigate('/patient');
         } else if (role === 'Doctor') {
           // Doctor requires approval
+          if (!specialization || !qualifications || !experienceYears || !consultationFee || !contactNumber) {
+            toast.error('Please fill doctor profile details.');
+            return;
+          }
           const doctorRequest = {
             email,
             password,
             firstName,
             lastName,
-            specialization: 'General Practitioner',
-            qualifications: ['MBBS'],
-            experienceYears: 5,
-            contactNumber: '0000000000',
-            consultationFee: 150,
+            specialization,
+            qualifications: qualifications
+              .split(',')
+              .map((item) => item.trim())
+              .filter(Boolean),
+            experienceYears: Number(experienceYears),
+            contactNumber,
+            consultationFee: Number(consultationFee),
           };
           const { data: approvalRes } = await api.post('/approvals/doctor', doctorRequest);
           if (approvalRes.emailSent) {
@@ -131,7 +150,7 @@ const Login = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4 shadow-lg border border-white/30">
               <HeartPulse size={32} className="text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-white tracking-tight">MediCareX</h2>
+            <h2 className="text-3xl font-bold text-white tracking-tight">hospitalflow</h2>
             <p className="text-white/70 mt-2 text-sm">
               {isLogin ? 'Welcome back to your healthcare portal' : 'Create your account to get started'}
             </p>
@@ -225,6 +244,90 @@ const Login = () => {
                 className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl pl-11 pr-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
               />
             </div>
+
+            {!isLogin && role === 'Patient' && (
+              <>
+                <input
+                  type="date"
+                  required
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                />
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                >
+                  <option className="text-slate-900" value="Male">Male</option>
+                  <option className="text-slate-900" value="Female">Female</option>
+                  <option className="text-slate-900" value="Other">Other</option>
+                </select>
+                <input
+                  type="text"
+                  required
+                  placeholder="Phone Number"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                />
+                <input
+                  type="text"
+                  required
+                  placeholder="Address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                />
+              </>
+            )}
+
+            {!isLogin && role === 'Doctor' && (
+              <>
+                <input
+                  type="text"
+                  required
+                  placeholder="Specialization"
+                  value={specialization}
+                  onChange={(e) => setSpecialization(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                />
+                <input
+                  type="text"
+                  required
+                  placeholder="Qualifications (comma separated)"
+                  value={qualifications}
+                  onChange={(e) => setQualifications(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  placeholder="Experience (years)"
+                  value={experienceYears}
+                  onChange={(e) => setExperienceYears(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  placeholder="Consultation Fee"
+                  value={consultationFee}
+                  onChange={(e) => setConsultationFee(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                />
+                <input
+                  type="text"
+                  required
+                  placeholder="Phone Number"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                />
+              </>
+            )}
 
             <button type="submit" className="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-colors shadow-lg mt-2">
               {isLogin ? `Sign In as ${role}` : 'Create Account'}

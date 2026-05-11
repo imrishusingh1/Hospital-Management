@@ -44,7 +44,7 @@ const DashboardLayout = () => {
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#1db1d7] shrink-0">
               <Plus strokeWidth={4} size={16} />
             </div>
-            <span className="text-xl font-bold tracking-tight text-white">MediCareX</span>
+            <span className="text-xl font-bold tracking-tight text-white">hospitalflow</span>
           </div>
           <p className="text-sm text-white/60 capitalize ml-10">{user?.role} Portal</p>
         </div>

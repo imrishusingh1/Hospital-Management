@@ -6,6 +6,31 @@ import { Shield, Star, Camera, CheckCircle2, ChevronLeft, ChevronRight, Phone, S
 
 const Landing = () => {
   const [openFaq, setOpenFaq] = useState(0);
+  const [currentDocIndex, setCurrentDocIndex] = useState(0);
+
+  const heroDoctors = [
+    {
+      name: "Dr. James Carter",
+      spec: "Cardiologist",
+      rating: "4.9/5",
+      img: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      name: "Dr. Sarah Mitchell",
+      spec: "Dermatologist",
+      rating: "4.8/5",
+      img: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      name: "Dr. Robert Elisson",
+      spec: "General Physician",
+      rating: "4.7/5",
+      img: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+    }
+  ];
+
+  const getPrevIndex = () => (currentDocIndex - 1 + heroDoctors.length) % heroDoctors.length;
+  const getNextIndex = () => (currentDocIndex + 1) % heroDoctors.length;
 
   const scrollToSection = (e, id) => {
     e.preventDefault();
@@ -66,7 +91,7 @@ const Landing = () => {
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#1db1d7]">
                 <Plus strokeWidth={4} size={20} />
               </div>
-              <span className="text-xl font-bold tracking-tight text-white">MediCareX</span>
+              <span className="text-xl font-bold tracking-tight text-white">hospitalflow</span>
             </div>
             
             <div className="hidden md:flex space-x-8 text-sm font-semibold text-white">
@@ -76,7 +101,10 @@ const Landing = () => {
               <a href="#process" onClick={(e) => scrollToSection(e, 'process')} className="hover:text-white/80 transition-colors">Process</a>
             </div>
 
-            <div className="mr-1">
+            <div className="flex items-center space-x-4 mr-1">
+              <Link to="/login" className="hidden md:block text-sm font-bold text-white hover:text-white/80 transition-colors">
+                Log In
+              </Link>
               <Link to="/login" className="bg-white text-slate-900 px-6 py-2.5 rounded-full font-bold text-sm hover:bg-gray-100 transition-colors shadow-sm">
                 Contact us
               </Link>
@@ -119,33 +147,33 @@ const Landing = () => {
             
             {/* Left Card (Faded) */}
             <div className="absolute left-0 transform -translate-x-12 scale-90 opacity-40 rounded-[2rem] overflow-hidden w-[300px] h-[400px]">
-               <img src="https://images.unsplash.com/photo-1594824436951-7f12678cecea?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" alt="Doctor" />
+               <img src={heroDoctors[getPrevIndex()].img} className="w-full h-full object-cover" alt={heroDoctors[getPrevIndex()].name} />
                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
 
             {/* Right Card (Faded) */}
             <div className="absolute right-0 transform translate-x-12 scale-90 opacity-40 rounded-[2rem] overflow-hidden w-[300px] h-[400px]">
-               <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" alt="Doctor" />
+               <img src={heroDoctors[getNextIndex()].img} className="w-full h-full object-cover" alt={heroDoctors[getNextIndex()].name} />
                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
 
             {/* Center Main Card */}
-            <div className="relative z-10 w-[380px] h-[480px] bg-slate-200 rounded-[2rem] shadow-2xl overflow-hidden border-4 border-white/10">
-              <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Dr. James Carter" className="w-full h-full object-cover" />
+            <div className="relative z-10 w-[380px] h-[480px] bg-slate-200 rounded-[2rem] shadow-2xl overflow-hidden border-4 border-white/10 transition-all duration-300">
+              <img src={heroDoctors[currentDocIndex].img} alt={heroDoctors[currentDocIndex].name} className="w-full h-full object-cover" />
               
               {/* Top Right Badge */}
               <div className="absolute top-4 right-4 bg-[#0a3d52] text-white px-3 py-1.5 rounded-full flex items-center text-sm font-semibold shadow-md">
-                <Star fill="currentColor" size={14} className="mr-1" /> 4.9/5
+                <Star fill="currentColor" size={14} className="mr-1" /> {heroDoctors[currentDocIndex].rating}
               </div>
 
               {/* Bottom Pill */}
               <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] bg-white rounded-full p-2 flex items-center shadow-xl">
-                <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" className="w-10 h-10 rounded-full object-cover border border-gray-100" alt="Avatar" />
+                <img src={heroDoctors[currentDocIndex].img} className="w-10 h-10 rounded-full object-cover border border-gray-100" alt="Avatar" />
                 <div className="ml-3 flex-1">
-                  <h4 className="text-slate-900 font-bold text-sm leading-tight">Dr. James Carter</h4>
-                  <p className="text-slate-500 text-xs">Cardiologist</p>
+                  <h4 className="text-slate-900 font-bold text-sm leading-tight">{heroDoctors[currentDocIndex].name}</h4>
+                  <p className="text-slate-500 text-xs">{heroDoctors[currentDocIndex].spec}</p>
                 </div>
-                <button onClick={() => toast.success("View Doctor Profile")} className="w-10 h-10 rounded-full bg-[#1db1d7] flex items-center justify-center text-white hover:bg-[#1598b9] transition-colors">
+                <button onClick={() => toast.success(`View ${heroDoctors[currentDocIndex].name}'s Profile`)} className="w-10 h-10 rounded-full bg-[#1db1d7] flex items-center justify-center text-white hover:bg-[#1598b9] transition-colors shrink-0">
                   <Camera size={18} />
                 </button>
               </div>
@@ -153,10 +181,10 @@ const Landing = () => {
 
             {/* Carousel Controls */}
             <div className="absolute -bottom-6 flex space-x-4 z-20">
-              <button onClick={() => toast.success("Showing previous doctors")} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors border border-white/10">
+              <button onClick={() => setCurrentDocIndex(getPrevIndex())} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors border border-white/10">
                 <ChevronLeft size={24} />
               </button>
-              <button onClick={() => toast.success("Showing more doctors")} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors border border-white/10">
+              <button onClick={() => setCurrentDocIndex(getNextIndex())} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors border border-white/10">
                 <ChevronRight size={24} />
               </button>
             </div>
@@ -186,7 +214,7 @@ const Landing = () => {
               <div className="w-5 h-5 rounded-full bg-[#107c9f] text-white flex items-center justify-center mr-2">
                 <Shield size={12} fill="currentColor" />
               </div>
-              About MediCareX
+              About hospitalflow
             </div>
             <h2 className="text-4xl md:text-5xl font-semibold text-slate-900 tracking-tight leading-tight">
               We are a modern healthcare team focused on connecting you with trusted doctors and making quality care easy, clear, and accessible anytime.
@@ -502,10 +530,10 @@ const Landing = () => {
               <div className="w-5 h-5 rounded-full bg-[#107c9f] text-white flex items-center justify-center mr-2">
                 <Shield size={12} fill="currentColor" />
               </div>
-              Why MediCareX?
+              Why hospitalflow?
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
-              Why Choose MediCareX<br />for Better Healthcare
+              Why Choose hospitalflow<br />for Better Healthcare
             </h2>
           </div>
 
@@ -660,7 +688,7 @@ const Landing = () => {
                 <div className="flex text-amber-500 mb-6">
                   <Star fill="currentColor" size={20} /><Star fill="currentColor" size={20} /><Star fill="currentColor" size={20} /><Star fill="currentColor" size={20} /><Star fill="currentColor" size={20} />
                 </div>
-                <p className="text-slate-600 text-lg leading-relaxed">MediCareX connected me with an amazing cardiologist. I felt heard, cared for, and supported throughout my entire visit.</p>
+                <p className="text-slate-600 text-lg leading-relaxed">hospitalflow connected me with an amazing cardiologist. I felt heard, cared for, and supported throughout my entire visit.</p>
               </div>
               <div className="flex items-center justify-between mt-8">
                 <div className="flex items-center">
@@ -747,7 +775,7 @@ const Landing = () => {
                </div>
                <div>
                  <h3 className="text-3xl font-bold mb-2">Still have more questions?</h3>
-                 <p className="text-white/80 max-w-md text-sm md:text-base">Book a call with our friendly team to learn how MedicareX simplifies your healthcare journey.</p>
+                 <p className="text-white/80 max-w-md text-sm md:text-base">Book a call with our friendly team to learn how hospitalflow simplifies your healthcare journey.</p>
                </div>
              </div>
           </div>
@@ -798,9 +826,9 @@ const Landing = () => {
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#1db1d7]">
                     <Plus strokeWidth={4} size={20} />
                   </div>
-                  <span className="text-2xl font-bold tracking-tight">MediCareX</span>
+                  <span className="text-2xl font-bold tracking-tight">hospitalflow</span>
                 </div>
-                <p className="text-white/70 mb-8 text-sm leading-relaxed">A premium clinic template built for modern medical professionals.</p>
+                <p className="text-white/70 mb-8 text-sm leading-relaxed">A comprehensive hospital management platform providing seamless healthcare experiences.</p>
                 
                 {/* Newsletter Input */}
                 <form onSubmit={handleNewsletterSubmit} className="flex items-center bg-white/10 border border-white/20 rounded-full p-1.5 w-full max-w-sm">
@@ -848,12 +876,11 @@ const Landing = () => {
 
             {/* Bottom Bar */}
             <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-white/70">
-              <p>Copyright@2026 &nbsp;&bull;&nbsp; Made in framer</p>
+              <p>Copyright@2026 &nbsp;&bull;&nbsp; Built with MERN Stack</p>
               <div className="flex items-center mt-4 md:mt-0">
-                <span className="mr-3">Template by</span>
+                <span className="mr-3">Developed by</span>
                 <div className="flex items-center text-white font-medium">
-                  <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=50&q=80" alt="Nasir Nawaz" className="w-6 h-6 rounded-full mr-2 object-cover border border-white/20" />
-                  Nasir Nawaz
+                  Rishu Singh
                 </div>
               </div>
             </div>
