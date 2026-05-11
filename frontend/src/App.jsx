@@ -8,10 +8,12 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 
 import Landing from './pages/Landing';
+import PatientDashboard from './pages/patient/PatientDashboard';
+import BookAppointment from './pages/patient/BookAppointment';
+import PatientProfile from './pages/patient/PatientProfile';
 
 // Placeholder components for other pages
 const DoctorDashboard = () => <div className="p-6 card">Doctor Dashboard Coming Soon</div>;
-const PatientDashboard = () => <div className="p-6 card">Patient Dashboard Coming Soon</div>;
 
 function App() {
   return (
@@ -44,8 +46,8 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['Patient']} />}>
             <Route element={<DashboardLayout />}>
               <Route path="/patient" element={<PatientDashboard />} />
-              <Route path="/patient/book" element={<div>Book Appointment</div>} />
-              <Route path="/patient/profile" element={<div>My Profile</div>} />
+              <Route path="/patient/book" element={<BookAppointment />} />
+              <Route path="/patient/profile" element={<PatientProfile />} />
             </Route>
           </Route>
           
