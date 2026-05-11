@@ -5,6 +5,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,6 +15,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const res = await api.get('/auth/me');
           setUser(res.data.data.user);
+          setProfile(res.data.data.profile);
         } catch (error) {
           console.error("Auth init error:", error);
           localStorage.removeItem('token');
@@ -24,28 +26,38 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  const hydrateMe = async () => {
+    const res = await api.get('/auth/me');
+    setUser(res.data.data.user);
+    setProfile(res.data.data.profile);
+    return res;
+  };
+
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
     localStorage.setItem('token', res.data.token);
-    setUser(res.data.user);
+    await hydrateMe();
     return res.data;
   };
 
   const register = async (userData) => {
     const res = await api.post('/auth/register', userData);
-    localStorage.setItem('token', res.data.token);
-    setUser(res.data.user);
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+      await hydrateMe();
+    }
     return res.data;
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    setProfile(null);
     window.location.href = '/login';
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

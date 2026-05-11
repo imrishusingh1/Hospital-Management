@@ -11,9 +11,7 @@ import Landing from './pages/Landing';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import BookAppointment from './pages/patient/BookAppointment';
 import PatientProfile from './pages/patient/PatientProfile';
-
-// Placeholder components for other pages
-const DoctorDashboard = () => <div className="p-6 card">Doctor Dashboard Coming Soon</div>;
+import DoctorDashboard from './pages/doctor/DoctorDashboard';
 
 function App() {
   return (

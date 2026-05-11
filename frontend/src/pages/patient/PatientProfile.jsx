@@ -1,10 +1,10 @@
 import React, { useContext } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, MapPin, Calendar, Heart, Shield, Edit3 } from 'lucide-react';
-import { AuthContext } from '../../../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 
 const PatientProfile = () => {
-  const { user } = useContext(AuthContext);
+  const { user, profile } = useContext(AuthContext);
 
   return (
     <motion.div 
@@ -50,7 +50,7 @@ const PatientProfile = () => {
                 <Phone className="text-slate-400 mt-0.5" size={18} />
                 <div>
                   <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Phone Number</p>
-                  <p className="text-sm font-medium text-slate-900">+1 (555) 123-4567</p>
+                  <p className="text-sm font-medium text-slate-900">{profile?.contactNumber || '—'}</p>
                 </div>
               </div>
 
@@ -58,7 +58,9 @@ const PatientProfile = () => {
                 <Calendar className="text-slate-400 mt-0.5" size={18} />
                 <div>
                   <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Date of Birth</p>
-                  <p className="text-sm font-medium text-slate-900">January 15, 1990</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {profile?.dob ? new Date(profile.dob).toLocaleDateString() : '—'}
+                  </p>
                 </div>
               </div>
 
@@ -66,7 +68,7 @@ const PatientProfile = () => {
                 <MapPin className="text-slate-400 mt-0.5" size={18} />
                 <div>
                   <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Address</p>
-                  <p className="text-sm font-medium text-slate-900">123 Wellness Ave, San Francisco, CA</p>
+                  <p className="text-sm font-medium text-slate-900">{profile?.address || '—'}</p>
                 </div>
               </div>
             </div>
@@ -89,15 +91,21 @@ const PatientProfile = () => {
                 <Shield className="text-green-500 mt-0.5" size={18} />
                 <div>
                   <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Insurance</p>
-                  <p className="text-sm font-medium text-slate-900">Blue Cross Shield (Active)</p>
+                  <p className="text-sm font-medium text-slate-900">—</p>
                 </div>
               </div>
 
               <div className="mt-6">
                 <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Known Allergies</p>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold">Penicillin</span>
-                  <span className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold">Peanuts</span>
+                  {(profile?.medicalHistory?.length ? profile.medicalHistory : ['—']).map((item, idx) => (
+                    <span
+                      key={`${item}-${idx}`}
+                      className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold"
+                    >
+                      {item}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>

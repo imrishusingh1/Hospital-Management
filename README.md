@@ -19,6 +19,27 @@ A complete MERN stack application for managing hospital workflows. Features role
 ### 1. Database and Environment
 The `.env` file is already created in the `backend/` directory with sensible defaults for local development.
 
+#### SMTP + Approval system (Admin/Doctor)
+Admin and Doctor account creation is **approval-based**. When someone tries to sign up as Admin or Doctor, the backend emails an approval link to `rishukrsingh99p@gmail.com`. Only after clicking that link will the account be created and able to log in.
+
+If **`SMTP_USER` / `SMTP_PASS` are not set**, the server still saves the approval request, **does not crash**, prints the approval URL in the **backend console**, and in **development** returns `approvalLink` in the JSON response so you can paste it in the browser. For real email delivery, add Gmail below.
+
+Add these variables to `backend/.env`:
+
+```bash
+# Used to build approval link URLs (clicked from email)
+APPROVAL_BASE_URL=http://localhost:5000
+
+# Gmail SMTP (use your Gmail + app password)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_gmail@gmail.com
+SMTP_PASS=your_gmail_app_password
+# Optional
+SMTP_FROM=your_gmail@gmail.com
+```
+
 ### 2. Backend Setup
 ```bash
 cd backend
@@ -40,7 +61,10 @@ npm run dev
 ### 4. Default Credentials (from Seed)
 - **Admin**: `admin@healthflow.com` / `password123`
 - **Doctor**: `doctor@healthflow.com` / `password123`
+- **Doctor2**: `doctor2@healthflow.com` / `password123`
 - **Patient**: `patient@healthflow.com` / `password123`
+- **Patient2**: `patient2@healthflow.com` / `password123`
+- **Patient3**: `patient3@healthflow.com` / `password123`
 
 ## Tech Stack
 - **Frontend**: React (Vite), TailwindCSS, React-Router, Recharts, Lucide-React, React-Hot-Toast.

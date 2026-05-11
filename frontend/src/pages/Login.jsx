@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 import { User, Mail, Lock, Stethoscope, Shield, HeartPulse, ArrowLeft } from 'lucide-react';
 
@@ -29,29 +30,77 @@ const Login = () => {
         else if (data.user.role === 'Doctor') navigate('/doctor');
         else navigate('/patient');
       } else {
-        // Register Flow
-        // Mocking required fields to satisfy backend schema for quick registration
-        const userData = {
-          email,
-          password,
-          role,
-          firstName,
-          lastName,
-          dob: '1990-01-01',
-          gender: 'Other',
-          contactNumber: '0000000000',
-          ...(role === 'Doctor' && {
+        // Signup Flow
+        if (role === 'Patient') {
+          const userData = {
+            email,
+            password,
+            role,
+            firstName,
+            lastName,
+            dob: '1990-01-01',
+            gender: 'Other',
+            contactNumber: '0000000000',
+            address: 'N/A',
+          };
+          const data = await register(userData);
+          toast.success('Account created successfully!');
+          navigate('/patient');
+        } else if (role === 'Doctor') {
+          // Doctor requires approval
+          const doctorRequest = {
+            email,
+            password,
+            firstName,
+            lastName,
             specialization: 'General Practitioner',
             qualifications: ['MBBS'],
             experienceYears: 5,
-            consultationFee: 150
-          })
-        };
-        const data = await register(userData);
-        toast.success('Account created successfully!');
-        if (data.user.role === 'Admin') navigate('/admin');
-        else if (data.user.role === 'Doctor') navigate('/doctor');
-        else navigate('/patient');
+            contactNumber: '0000000000',
+            consultationFee: 150,
+          };
+          const { data: approvalRes } = await api.post('/approvals/doctor', doctorRequest);
+          if (approvalRes.emailSent) {
+            toast.success('Check your email for the approval link.');
+          } else {
+            let copied = false;
+            if (approvalRes.approvalLink) {
+              try {
+                await navigator.clipboard.writeText(approvalRes.approvalLink);
+                copied = true;
+              } catch {
+                console.info('Approval link:', approvalRes.approvalLink);
+              }
+            }
+            toast.success(
+              copied
+                ? 'Link copied — paste in the address bar. Add SMTP to backend/.env for Gmail.'
+                : 'Saved. Add SMTP_USER and SMTP_PASS to backend/.env (or see console F12).'
+            );
+          }
+          setIsLogin(true);
+        } else {
+          const { data: approvalRes } = await api.post('/approvals/admin', { email, password });
+          if (approvalRes.emailSent) {
+            toast.success('Check your email for the approval link.');
+          } else {
+            let copied = false;
+            if (approvalRes.approvalLink) {
+              try {
+                await navigator.clipboard.writeText(approvalRes.approvalLink);
+                copied = true;
+              } catch {
+                console.info('Approval link:', approvalRes.approvalLink);
+              }
+            }
+            toast.success(
+              copied
+                ? 'Link copied — paste in the address bar. Add SMTP to backend/.env for Gmail.'
+                : 'Saved. Add SMTP_USER and SMTP_PASS to backend/.env (or see console F12).'
+            );
+          }
+          setIsLogin(true);
+        }
       }
     } catch (error) {
       toast.error(error.response?.data?.message || (isLogin ? 'Login failed' : 'Registration failed'));
@@ -112,6 +161,12 @@ const Login = () => {
               <Shield size={16} className="mr-2" /> Admin
             </button>
           </div>
+
+          {!isLogin && (role === 'Doctor' || role === 'Admin') && (
+            <div className="mb-6 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white/80">
+              Doctor and Admin signups require manual approval by the system owner. You’ll be able to log in after approval.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4 relative">
             <AnimatePresence mode="wait">
