@@ -11,7 +11,19 @@ import Landing from './pages/Landing';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import BookAppointment from './pages/patient/BookAppointment';
 import PatientProfile from './pages/patient/PatientProfile';
+import PatientAppointments from './pages/patient/PatientAppointments';
+import PatientPrescriptions from './pages/patient/PatientPrescriptions';
+import PatientRecords from './pages/patient/PatientRecords';
+
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
+import DoctorAppointments from './pages/doctor/DoctorAppointments';
+import DoctorPatients from './pages/doctor/DoctorPatients';
+import DoctorProfile from './pages/doctor/DoctorProfile';
+
+import UserManagement from './pages/admin/UserManagement';
+import AllAppointments from './pages/admin/AllAppointments';
+
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -26,8 +38,8 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
             <Route element={<DashboardLayout />}>
               <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<div>User Management</div>} />
-              <Route path="/admin/appointments" element={<div>All Appointments</div>} />
+              <Route path="/admin/users" element={<UserManagement />} />
+              <Route path="/admin/appointments" element={<AllAppointments />} />
             </Route>
           </Route>
 
@@ -35,8 +47,9 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['Doctor']} />}>
             <Route element={<DashboardLayout />}>
               <Route path="/doctor" element={<DoctorDashboard />} />
-              <Route path="/doctor/appointments" element={<div>My Appointments</div>} />
-              <Route path="/doctor/patients" element={<div>My Patients</div>} />
+              <Route path="/doctor/appointments" element={<DoctorAppointments />} />
+              <Route path="/doctor/patients" element={<DoctorPatients />} />
+              <Route path="/doctor/profile" element={<DoctorProfile />} />
             </Route>
           </Route>
 
@@ -44,12 +57,16 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['Patient']} />}>
             <Route element={<DashboardLayout />}>
               <Route path="/patient" element={<PatientDashboard />} />
+              <Route path="/patient/appointments" element={<PatientAppointments />} />
               <Route path="/patient/book" element={<BookAppointment />} />
+              <Route path="/patient/prescriptions" element={<PatientPrescriptions />} />
+              <Route path="/patient/records" element={<PatientRecords />} />
               <Route path="/patient/profile" element={<PatientProfile />} />
             </Route>
           </Route>
           
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/404" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

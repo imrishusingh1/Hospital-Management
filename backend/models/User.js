@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     select: false, // Don't return password by default
   },
+  avatar: { type: String },
   role: {
     type: String,
     enum: ['Admin', 'Doctor', 'Patient'],
@@ -25,6 +26,7 @@ const userSchema = new mongoose.Schema({
     enum: ['Active', 'Inactive'],
     default: 'Active',
   },
+  lastLogin: { type: Date },
   refreshToken: {
     type: String,
   }

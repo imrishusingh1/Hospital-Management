@@ -4,7 +4,9 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const connectDB = require('./config/db');
+const path = require('path');
 
 // Connect to Database
 connectDB();
@@ -15,7 +17,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
+app.use(compression()); // Add compression
 app.use(morgan('dev'));
+
+// Static folder for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rate Limiting
 const limiter = rateLimit({
@@ -30,13 +36,15 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/approvals', require('./routes/approvalRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/records', require('./routes/medicalRecordRoutes'));
 
 // Basic Route
 app.get('/', (req, res) => {
   res.send('Healthcare Workflow System API is running...');
 });
 
-// Error Handling Middleware (To be implemented fully later)
+// Error Handling Middleware
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   res.status(statusCode).json({

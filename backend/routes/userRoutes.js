@@ -1,5 +1,5 @@
 const express = require('express');
-const { getUsers, updateUserStatus, getDoctors, getPatients } = require('../controllers/userController');
+const { getUsers, updateUserStatus, getDoctors, getPatients, updateDoctorProfile, updatePatientProfile, deleteUser } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 const auditLogger = require('../middleware/audit');
 
@@ -10,6 +10,9 @@ router.use(protect);
 router.get('/', authorize('Admin'), getUsers);
 router.put('/:id/status', authorize('Admin'), auditLogger('UPDATE_STATUS', 'User'), updateUserStatus);
 router.get('/doctors', getDoctors);
+router.put('/doctors/profile', authorize('Doctor'), auditLogger('UPDATE_PROFILE', 'User'), updateDoctorProfile);
 router.get('/patients', authorize('Admin', 'Doctor'), getPatients);
+router.put('/patients/profile', authorize('Patient'), auditLogger('UPDATE_PROFILE', 'User'), updatePatientProfile);
+router.delete('/:id', authorize('Admin'), auditLogger('DELETE', 'User'), deleteUser);
 
 module.exports = router;

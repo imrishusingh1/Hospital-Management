@@ -12,6 +12,18 @@ const patientSchema = new mongoose.Schema({
   gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
   contactNumber: { type: String, required: true },
   address: { type: String },
+  avatar: { type: String },
+  bloodGroup: { type: String },
+  allergies: { type: [String], default: [] },
+  emergencyContact: {
+    name: String,
+    relation: String,
+    number: String
+  },
+  insuranceDetails: {
+    provider: String,
+    policyNumber: String
+  },
   medicalHistory: { type: [String], default: [] },
 }, { timestamps: true });
 

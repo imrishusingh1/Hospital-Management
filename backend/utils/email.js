@@ -74,8 +74,23 @@ async function sendApprovalEmail({ to, subject, token, intro }) {
   return { link, emailSent: true };
 }
 
+async function sendAppointmentEmail({ to, subject, details }) {
+  if (!isSmtpConfigured()) return { emailSent: false };
+  const transporter = getTransporter();
+  const from = getOpt('SMTP_FROM', process.env.SMTP_USER);
+
+  await transporter.sendMail({
+    from,
+    to,
+    subject,
+    text: details,
+  });
+  return { emailSent: true };
+}
+
 module.exports = {
   sendApprovalEmail,
   buildApprovalLink,
   isSmtpConfigured,
+  sendAppointmentEmail
 };

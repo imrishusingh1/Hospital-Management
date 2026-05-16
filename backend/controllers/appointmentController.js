@@ -6,9 +6,13 @@ const Prescription = require('../models/Prescription');
 // @access  Private (Patient/Admin)
 exports.createAppointment = async (req, res, next) => {
   try {
-    const { patientId, doctorId, date, timeSlot, reason, notes } = req.body;
+    const { patientId, doctorId, date, timeSlot, reason, notes, type } = req.body;
     
-    // Additional validation can be added here (e.g. check if slot is available)
+    // Check if slot is available
+    const existing = await Appointment.findOne({ doctorId, date, timeSlot, status: { $ne: 'Cancelled' } });
+    if (existing) {
+        return res.status(400).json({ message: 'Time slot is already booked for this doctor.' });
+    }
 
     const appointment = await Appointment.create({
       patientId,
@@ -16,7 +20,8 @@ exports.createAppointment = async (req, res, next) => {
       date,
       timeSlot,
       reason,
-      notes
+      notes,
+      type
     });
 
     res.status(201).json({ success: true, data: appointment });
@@ -115,3 +120,73 @@ exports.getPrescription = async (req, res, next) => {
         next(error);
     }
 }
+
+// @desc    Cancel an appointment
+// @route   DELETE /api/appointments/:id
+// @access  Private
+exports.cancelAppointment = async (req, res, next) => {
+    try {
+        const { cancelReason } = req.body;
+        const appointment = await Appointment.findById(req.params.id);
+        
+        if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+        
+        appointment.status = 'Cancelled';
+        appointment.cancelReason = cancelReason || 'Cancelled by user';
+        await appointment.save();
+
+        res.status(200).json({ success: true, data: appointment });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Reschedule an appointment
+// @route   PUT /api/appointments/:id/reschedule
+// @access  Private
+exports.rescheduleAppointment = async (req, res, next) => {
+    try {
+        const { date, timeSlot } = req.body;
+        const appointment = await Appointment.findById(req.params.id);
+        if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+        // Check availability
+        const existing = await Appointment.findOne({ doctorId: appointment.doctorId, date, timeSlot, status: { $ne: 'Cancelled' } });
+        if (existing) {
+            return res.status(400).json({ message: 'Time slot is already booked.' });
+        }
+
+        appointment.date = date;
+        appointment.timeSlot = timeSlot;
+        appointment.status = 'Pending';
+        await appointment.save();
+
+        res.status(200).json({ success: true, data: appointment });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get available slots for a doctor
+// @route   GET /api/appointments/slots
+// @access  Private
+exports.getAvailableSlots = async (req, res, next) => {
+    try {
+        const { doctorId, date } = req.query;
+        if (!doctorId || !date) return res.status(400).json({ message: 'Doctor ID and date required' });
+
+        const Doctor = require('../models/Doctor');
+        const doctor = await Doctor.findById(doctorId);
+        if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+
+        const appointments = await Appointment.find({ doctorId, date, status: { $ne: 'Cancelled' } });
+        const bookedSlots = appointments.map(a => a.timeSlot);
+
+        // Assume availableTimeSlots is an array on Doctor model
+        const availableSlots = (doctor.availableTimeSlots || ['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM']).filter(slot => !bookedSlots.includes(slot));
+
+        res.status(200).json({ success: true, data: availableSlots });
+    } catch (error) {
+        next(error);
+    }
+};

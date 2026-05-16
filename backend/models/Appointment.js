@@ -13,6 +13,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   date: { type: Date, required: true },
   timeSlot: { type: String, required: true },
+  type: { type: String, enum: ['In-Person', 'Video', 'Phone'], default: 'In-Person' },
   status: {
     type: String,
     enum: ['Pending', 'Confirmed', 'Completed', 'Cancelled'],
@@ -20,6 +21,8 @@ const appointmentSchema = new mongoose.Schema({
   },
   reason: { type: String, required: true },
   notes: { type: String },
+  cancelReason: { type: String },
+  attachments: { type: [String], default: [] },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Appointment', appointmentSchema);
