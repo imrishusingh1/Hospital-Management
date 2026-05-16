@@ -24,15 +24,28 @@ import UserManagement from './pages/admin/UserManagement';
 import AllAppointments from './pages/admin/AllAppointments';
 
 import NotFound from './pages/NotFound';
+import ApprovalStatus from './pages/ApprovalStatus';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Toaster position="top-right" />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              borderRadius: '12px',
+              fontSize: '14px',
+              maxWidth: '420px',
+            },
+            success: { iconTheme: { primary: '#107c9f', secondary: '#fff' } },
+          }}
+        />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/approve" element={<ApprovalStatus />} />
           
           {/* Admin Routes */}
           <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>

@@ -34,6 +34,10 @@ function getTransporter() {
  * Builds the URL the approver must open. Defaults to local API if APPROVAL_BASE_URL is unset.
  */
 function buildApprovalLink(token) {
+  const frontend = getOpt('FRONTEND_URL', 'http://localhost:5173');
+  if (frontend) {
+    return `${frontend.replace(/\/+$/, '')}/approve?token=${encodeURIComponent(token)}`;
+  }
   const base = getOpt('APPROVAL_BASE_URL', 'http://localhost:5000').replace(/\/+$/, '');
   return `${base}/api/approvals/approve/${encodeURIComponent(token)}`;
 }

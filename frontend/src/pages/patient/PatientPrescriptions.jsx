@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import html2pdf from 'html2pdf.js';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../../context/AuthContext';
@@ -41,6 +42,21 @@ const PatientPrescriptions = () => {
     } catch (e) {
       toast.error('Failed to fetch prescription');
     }
+  };
+
+  const handleDownloadPdf = () => {
+    const element = document.getElementById('prescription-pdf-content');
+    if (!element) return;
+    
+    const opt = {
+      margin: [0.5, 0.5, 0.5, 0.5],
+      filename: `Prescription_${new Date(viewPrescriptionModal.date).toLocaleDateString().replace(/\//g, '-')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
   };
 
   return (
@@ -87,7 +103,8 @@ const PatientPrescriptions = () => {
       <Modal isOpen={viewPrescriptionModal.isOpen} onClose={() => setViewPrescriptionModal({ isOpen: false, prescription: null, doctor: null, date: null })} title="Prescription Details" maxWidth="max-w-2xl">
         {viewPrescriptionModal.prescription && (
           <div className="space-y-8">
-            <div className="flex justify-between items-center border-b border-gray-100 pb-6">
+            <div id="prescription-pdf-content" className="space-y-8 p-4 bg-white">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-6">
               <div className="flex items-center space-x-4">
                 <Avatar src={viewPrescriptionModal.doctor?.avatar} name={`Dr. ${viewPrescriptionModal.doctor?.lastName}`} size="lg" />
                 <div>
@@ -127,9 +144,10 @@ const PatientPrescriptions = () => {
                 </div>
               </div>
             )}
+            </div>
             
             <div className="pt-4 flex justify-end">
-               <button className="flex items-center px-4 py-2 bg-slate-900 text-white rounded-lg font-bold text-sm hover:bg-slate-800 transition-colors">
+               <button onClick={handleDownloadPdf} className="flex items-center px-4 py-2 bg-slate-900 text-white rounded-lg font-bold text-sm hover:bg-slate-800 transition-colors">
                  <Download size={16} className="mr-2" /> Download PDF
                </button>
             </div>

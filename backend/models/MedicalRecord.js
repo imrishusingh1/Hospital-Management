@@ -18,7 +18,7 @@ const medicalRecordSchema = new mongoose.Schema({
   },
   title: { type: String, required: true },
   description: { type: String },
-  fileUrl: { type: String, required: true }, // Path or URL to the uploaded file
+  fileUrl: { type: String }, // Path or URL to the uploaded file
   date: { type: Date, default: Date.now }
 }, { timestamps: true });
 

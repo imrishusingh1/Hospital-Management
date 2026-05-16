@@ -5,7 +5,9 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../../context/AuthContext';
-import { XCircle, Calendar, Clock, MapPin } from 'lucide-react';
+import { XCircle, Calendar, Clock, RefreshCw } from 'lucide-react';
+import RescheduleModal from '../../components/RescheduleModal';
+import PageHeader from '../../components/ui/PageHeader';
 import Avatar from '../../components/ui/Avatar';
 
 const PatientAppointments = () => {
@@ -13,6 +15,7 @@ const PatientAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelDialog, setCancelDialog] = useState({ isOpen: false, appointmentId: null });
+  const [rescheduleAppt, setRescheduleAppt] = useState(null);
 
   const fetchAppointments = async () => {
     if (!profile?._id) return;
@@ -81,12 +84,22 @@ const PatientAppointments = () => {
       render: (row) => (
         <div className="flex items-center space-x-2">
           {(row.status === 'Pending' || row.status === 'Confirmed') && (
-            <button 
-              onClick={() => setCancelDialog({ isOpen: true, appointmentId: row._id })} 
-              className="px-3 py-1.5 text-xs font-bold text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors flex items-center"
-            >
-              <XCircle size={14} className="mr-1" /> Cancel
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setRescheduleAppt(row)}
+                className="px-3 py-1.5 text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors flex items-center"
+              >
+                <RefreshCw size={14} className="mr-1" /> Reschedule
+              </button>
+              <button 
+                type="button"
+                onClick={() => setCancelDialog({ isOpen: true, appointmentId: row._id })} 
+                className="px-3 py-1.5 text-xs font-bold text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors flex items-center"
+              >
+                <XCircle size={14} className="mr-1" /> Cancel
+              </button>
+            </>
           )}
         </div>
       )

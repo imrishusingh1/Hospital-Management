@@ -26,7 +26,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  max: process.env.NODE_ENV === 'development' ? 5000 : 100,
+  message: 'Too many requests from this IP, please try again after 15 minutes',
 });
 app.use('/api', limiter);
 

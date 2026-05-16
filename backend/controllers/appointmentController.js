@@ -1,12 +1,25 @@
 const Appointment = require('../models/Appointment');
 const Prescription = require('../models/Prescription');
+const Patient = require('../models/Patient');
+const Doctor = require('../models/Doctor');
+const Notification = require('../models/Notification');
 
 // @desc    Book an appointment
 // @route   POST /api/appointments
 // @access  Private (Patient/Admin)
 exports.createAppointment = async (req, res, next) => {
   try {
-    const { patientId, doctorId, date, timeSlot, reason, notes, type } = req.body;
+    let { patientId, doctorId, date, timeSlot, reason, notes, type } = req.body;
+
+    if (req.user.role === 'Patient') {
+      const p = await Patient.findOne({ userId: req.user._id });
+      if (!p) return res.status(404).json({ message: 'Patient profile not found' });
+      patientId = p._id;
+    }
+
+    if (!patientId || !doctorId || !date || !timeSlot || !reason) {
+      return res.status(400).json({ message: 'doctorId, date, timeSlot, and reason are required' });
+    }
     
     // Check if slot is available
     const existing = await Appointment.findOne({ doctorId, date, timeSlot, status: { $ne: 'Cancelled' } });
@@ -24,6 +37,16 @@ exports.createAppointment = async (req, res, next) => {
       type
     });
 
+    const patient = await Patient.findById(patientId).populate('userId', '_id');
+    if (patient?.userId?._id) {
+      await Notification.create({
+        userId: patient.userId._id,
+        title: 'Appointment booked',
+        message: `Your appointment on ${new Date(date).toLocaleDateString()} at ${timeSlot} is pending confirmation.`,
+        type: 'Appointment',
+      });
+    }
+
     res.status(201).json({ success: true, data: appointment });
   } catch (error) {
     next(error);
@@ -40,23 +63,26 @@ exports.getAppointments = async (req, res, next) => {
     if (req.user.role === 'Admin') {
       query = Appointment.find();
     } else if (req.user.role === 'Patient') {
-      // Need to find patient profile first, or require frontend to send patient ID
-      // Assuming frontend sends the specific profile ID as a query param or we look it up
-      // For simplicity, let's require patientId in query for patient, doctorId for doctor
-      if(req.query.patientId) {
-          query = Appointment.find({ patientId: req.query.patientId });
-      } else {
-          return res.status(400).json({message: "patientId query required"});
+      let pid = req.query.patientId;
+      if (!pid) {
+        const p = await Patient.findOne({ userId: req.user._id });
+        if (!p) return res.status(404).json({ message: 'Patient profile not found' });
+        pid = p._id;
       }
+      query = Appointment.find({ patientId: pid });
     } else if (req.user.role === 'Doctor') {
-      if(req.query.doctorId) {
-          query = Appointment.find({ doctorId: req.query.doctorId });
-      } else {
-          return res.status(400).json({message: "doctorId query required"});
+      let did = req.query.doctorId;
+      if (!did) {
+        const d = await Doctor.findOne({ userId: req.user._id });
+        if (!d) return res.status(404).json({ message: 'Doctor profile not found' });
+        did = d._id;
       }
+      query = Appointment.find({ doctorId: did });
     }
 
-    const appointments = await query.populate('patientId').populate('doctorId');
+    const appointments = await query
+      .populate({ path: 'patientId', populate: { path: 'userId', select: 'email avatar' } })
+      .populate({ path: 'doctorId', populate: { path: 'userId', select: 'email avatar' } });
     res.status(200).json({ success: true, data: appointments });
   } catch (error) {
     next(error);

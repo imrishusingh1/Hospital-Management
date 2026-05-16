@@ -24,11 +24,13 @@ const BookAppointment = () => {
   const [date, setDate] = useState('');
   const [timeSlot, setTimeSlot] = useState('');
   const [reason, setReason] = useState('');
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(() => {
     const loadDoctors = async () => {
       try {
-        const res = await api.get('/users/doctors');
+        const res = await api.get('/users/doctors', { params: { limit: 100 } });
         setDoctors(res.data.data || []);
       } catch (e) {
         toast.error('Failed to load doctors');
@@ -38,6 +40,29 @@ const BookAppointment = () => {
     };
     loadDoctors();
   }, []);
+
+  useEffect(() => {
+    const loadSlots = async () => {
+      if (!selectedDoctor?._id || !date) {
+        setAvailableSlots([]);
+        return;
+      }
+      setSlotsLoading(true);
+      setTimeSlot('');
+      try {
+        const res = await api.get('/appointments/slots', {
+          params: { doctorId: selectedDoctor._id, date },
+        });
+        setAvailableSlots(res.data.data || []);
+      } catch {
+        toast.error('Could not load time slots');
+        setAvailableSlots([]);
+      } finally {
+        setSlotsLoading(false);
+      }
+    };
+    loadSlots();
+  }, [selectedDoctor?._id, date]);
 
   const filteredDoctors = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -204,11 +229,15 @@ const BookAppointment = () => {
               
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center"><Clock size={16} className="mr-2" /> Select Time</label>
+                {slotsLoading && <p className="text-sm text-slate-500 mb-2">Loading slots…</p>}
+                {!slotsLoading && date && availableSlots.length === 0 && (
+                  <p className="text-sm text-amber-600 mb-2">No slots available for this date.</p>
+                )}
                 <div className="grid grid-cols-3 gap-3">
-                  {['09:00 AM', '10:30 AM', '11:00 AM', '01:00 PM', '02:30 PM', '04:00 PM'].map((time, i) => (
+                  {(availableSlots.length ? availableSlots : []).map((time) => (
                     <button
                       type="button"
-                      key={i}
+                      key={time}
                       onClick={() => setTimeSlot(time)}
                       className={`py-2 border rounded-lg text-sm transition-colors focus:ring-2 focus:ring-[#1db1d7] ${
                         timeSlot === time

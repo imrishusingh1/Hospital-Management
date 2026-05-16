@@ -127,7 +127,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-[#1db1d7] via-[#107c9f] to-[#073c52] p-4 overflow-hidden font-sans">
+    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 p-4 overflow-hidden font-sans">
       
       {/* Background Ornaments */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-white/10 blur-3xl" />

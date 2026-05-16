@@ -2,15 +2,19 @@ import React, { useState, useEffect, useContext } from 'react';
 import Table from '../../components/ui/Table';
 import SearchBar from '../../components/ui/SearchBar';
 import Avatar from '../../components/ui/Avatar';
+import PageHeader from '../../components/ui/PageHeader';
+import AddRecordModal from '../../components/doctor/AddRecordModal';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../../context/AuthContext';
+import { FilePlus } from 'lucide-react';
 
 const DoctorPatients = () => {
   const { profile } = useContext(AuthContext);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [recordModal, setRecordModal] = useState({ open: false, patientId: null, patientName: '' });
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -71,17 +75,33 @@ const DoctorPatients = () => {
         const age = new Date().getFullYear() - new Date(row.dob).getFullYear();
         return <span className="text-slate-600">{age} yrs</span>;
       }
-    }
+    },
+    {
+      header: 'Actions',
+      accessor: 'actions',
+      render: (row) => (
+        <button
+          type="button"
+          className="btn-ghost text-xs py-1.5 px-3"
+          onClick={() =>
+            setRecordModal({
+              open: true,
+              patientId: row._id,
+              patientName: `${row.firstName} ${row.lastName}`,
+            })
+          }
+        >
+          <FilePlus size={14} /> Add record
+        </button>
+      ),
+    },
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">My Patients</h2>
-        <p className="text-slate-500 text-sm">Directory of patients you have consulted.</p>
-      </div>
+    <div className="page-container">
+      <PageHeader title="My Patients" subtitle="Directory of patients you have consulted." />
 
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-6">
+      <div className="card space-y-6">
         <SearchBar value={search} onChange={setSearch} placeholder="Search by patient name..." />
         
         {loading ? (
@@ -90,6 +110,13 @@ const DoctorPatients = () => {
           <Table columns={columns} data={filteredPatients} keyField="_id" />
         )}
       </div>
+
+      <AddRecordModal
+        isOpen={recordModal.open}
+        onClose={() => setRecordModal({ open: false, patientId: null, patientName: '' })}
+        patientId={recordModal.patientId}
+        patientName={recordModal.patientName}
+      />
     </div>
   );
 };
