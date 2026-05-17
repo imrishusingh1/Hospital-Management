@@ -16,7 +16,10 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 app.use(compression()); // Add compression
 app.use(morgan('dev'));
 
@@ -39,6 +42,10 @@ app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/approvals', require('./routes/approvalRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/records', require('./routes/medicalRecordRoutes'));
+app.use('/api/public', require('./routes/publicRoutes'));
+app.use('/api/uploads', require('./routes/uploadRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/services', require('./routes/serviceRoutes'));
 
 // Basic Route
 app.get('/', (req, res) => {

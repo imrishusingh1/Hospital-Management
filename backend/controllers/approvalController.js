@@ -169,6 +169,10 @@ exports.approveRequest = async (req, res, next) => {
     const approval = await ApprovalRequest.findOne({ token });
     if (!approval) return res.status(404).send('Approval request not found.');
 
+    if (approval.status === 'Approved') {
+      return res.status(200).send('This request was already approved. The account is ready to use.');
+    }
+
     if (approval.status !== 'Pending') {
       return res.status(400).send(`This request is already ${approval.status}.`);
     }

@@ -4,6 +4,7 @@ import SearchBar from '../../components/ui/SearchBar';
 import Badge from '../../components/ui/Badge';
 import Pagination from '../../components/ui/Pagination';
 import AddDoctorModal from './AddDoctorModal';
+import EditUserModal from './EditUserModal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -19,6 +20,7 @@ const UserManagement = () => {
   
   const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, userId: null });
+  const [editUserId, setEditUserId] = useState(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -98,12 +100,23 @@ const UserManagement = () => {
       render: (row) => (
         <div className="flex space-x-2">
           {row.role !== 'Admin' && (
-            <button 
-              onClick={() => setDeleteDialog({ isOpen: true, userId: row._id })}
-              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-            >
-              <Trash2 size={16} />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setEditUserId(row._id)}
+                className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                title="Edit user"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteDialog({ isOpen: true, userId: row._id })}
+                className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
           )}
         </div>
       )
@@ -142,6 +155,13 @@ const UserManagement = () => {
       </div>
 
       <AddDoctorModal isOpen={isAddDoctorOpen} onClose={() => setIsAddDoctorOpen(false)} onAdded={fetchUsers} />
+
+      <EditUserModal
+        isOpen={!!editUserId}
+        userId={editUserId}
+        onClose={() => setEditUserId(null)}
+        onSaved={fetchUsers}
+      />
       
       <ConfirmDialog 
         isOpen={deleteDialog.isOpen} 

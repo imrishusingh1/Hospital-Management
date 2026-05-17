@@ -222,6 +222,7 @@ const BookAppointment = () => {
                 <input
                   type="date"
                   value={date}
+                  min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setDate(e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#1db1d7] text-slate-600"
                 />

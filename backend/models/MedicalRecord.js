@@ -9,7 +9,12 @@ const medicalRecordSchema = new mongoose.Schema({
   doctorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Doctor',
-    required: true,
+    default: null,
+  },
+  uploadedBy: {
+    type: String,
+    enum: ['Doctor', 'Patient'],
+    default: 'Doctor',
   },
   recordType: { 
     type: String, 

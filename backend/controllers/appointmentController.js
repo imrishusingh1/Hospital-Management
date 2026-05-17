@@ -20,6 +20,14 @@ exports.createAppointment = async (req, res, next) => {
     if (!patientId || !doctorId || !date || !timeSlot || !reason) {
       return res.status(400).json({ message: 'doctorId, date, timeSlot, and reason are required' });
     }
+
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      return res.status(400).json({ message: 'Cannot book an appointment in the past' });
+    }
     
     // Check if slot is available
     const existing = await Appointment.findOne({ doctorId, date, timeSlot, status: { $ne: 'Cancelled' } });
@@ -208,8 +216,29 @@ exports.getAvailableSlots = async (req, res, next) => {
         const appointments = await Appointment.find({ doctorId, date, status: { $ne: 'Cancelled' } });
         const bookedSlots = appointments.map(a => a.timeSlot);
 
+        const isToday = new Date(date).toDateString() === new Date().toDateString();
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+
         // Assume availableTimeSlots is an array on Doctor model
-        const availableSlots = (doctor.availableTimeSlots || ['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM']).filter(slot => !bookedSlots.includes(slot));
+        let availableSlots = (doctor.availableTimeSlots || ['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM']).filter(slot => !bookedSlots.includes(slot));
+
+        if (isToday) {
+            availableSlots = availableSlots.filter(slot => {
+                const match = slot.match(/(\d+):(\d+)\s+(AM|PM)/i);
+                if (!match) return true;
+                let [_, h, m, period] = match;
+                h = parseInt(h);
+                m = parseInt(m);
+                if (period.toUpperCase() === 'PM' && h !== 12) h += 12;
+                if (period.toUpperCase() === 'AM' && h === 12) h = 0;
+                
+                if (h > currentHours) return true;
+                if (h === currentHours && m > currentMinutes) return true;
+                return false;
+            });
+        }
 
         res.status(200).json({ success: true, data: availableSlots });
     } catch (error) {

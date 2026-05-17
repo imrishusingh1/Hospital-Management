@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 
 import Landing from './pages/Landing';
+import PublicDoctorProfile from './pages/PublicDoctorProfile';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import BookAppointment from './pages/patient/BookAppointment';
 import PatientProfile from './pages/patient/PatientProfile';
@@ -22,6 +23,7 @@ import DoctorProfile from './pages/doctor/DoctorProfile';
 
 import UserManagement from './pages/admin/UserManagement';
 import AllAppointments from './pages/admin/AllAppointments';
+import ServiceManagement from './pages/admin/ServiceManagement';
 
 import NotFound from './pages/NotFound';
 import ApprovalStatus from './pages/ApprovalStatus';
@@ -44,6 +46,7 @@ function App() {
         />
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/doctor-profile/:id" element={<PublicDoctorProfile />} />
           <Route path="/login" element={<Login />} />
           <Route path="/approve" element={<ApprovalStatus />} />
           
@@ -53,6 +56,7 @@ function App() {
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<UserManagement />} />
               <Route path="/admin/appointments" element={<AllAppointments />} />
+              <Route path="/admin/services" element={<ServiceManagement />} />
             </Route>
           </Route>
 

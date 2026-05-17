@@ -1,5 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
+import { resolveMediaUrl } from '../../utils/media';
 
 const Avatar = ({ src, name, size = 'md', className }) => {
   const sizes = {
@@ -22,7 +23,7 @@ const Avatar = ({ src, name, size = 'md', className }) => {
       className
     )}>
       {src ? (
-        <img src={src} alt={name || 'Avatar'} className="w-full h-full object-cover" />
+        <img src={resolveMediaUrl(src)} alt={name || 'Avatar'} className="w-full h-full object-cover" />
       ) : (
         <span>{getInitials(name)}</span>
       )}

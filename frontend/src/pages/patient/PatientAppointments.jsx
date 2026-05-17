@@ -9,6 +9,8 @@ import { XCircle, Calendar, Clock, RefreshCw } from 'lucide-react';
 import RescheduleModal from '../../components/RescheduleModal';
 import PageHeader from '../../components/ui/PageHeader';
 import Avatar from '../../components/ui/Avatar';
+import ReviewModal from '../../components/ReviewModal';
+import { Star } from 'lucide-react';
 
 const PatientAppointments = () => {
   const { profile } = useContext(AuthContext);
@@ -16,6 +18,7 @@ const PatientAppointments = () => {
   const [loading, setLoading] = useState(true);
   const [cancelDialog, setCancelDialog] = useState({ isOpen: false, appointmentId: null });
   const [rescheduleAppt, setRescheduleAppt] = useState(null);
+  const [reviewDialog, setReviewDialog] = useState({ isOpen: false, appointment: null });
 
   const fetchAppointments = async () => {
     if (!profile?._id) return;
@@ -101,6 +104,15 @@ const PatientAppointments = () => {
               </button>
             </>
           )}
+          {row.status === 'Completed' && (
+             <button
+               type="button"
+               onClick={() => setReviewDialog({ isOpen: true, appointment: row })}
+               className="px-3 py-1.5 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors flex items-center"
+             >
+               <Star size={14} className="mr-1 fill-amber-600" /> Review
+             </button>
+          )}
         </div>
       )
     }
@@ -129,6 +141,20 @@ const PatientAppointments = () => {
         message="Are you sure you want to cancel this appointment?"
         isDestructive={true}
         confirmText="Cancel Appointment"
+      />
+
+      <RescheduleModal
+        isOpen={!!rescheduleAppt}
+        onClose={() => setRescheduleAppt(null)}
+        appointment={rescheduleAppt}
+        onSuccess={fetchAppointments}
+      />
+
+      <ReviewModal
+        isOpen={reviewDialog.isOpen}
+        onClose={() => setReviewDialog({ isOpen: false, appointment: null })}
+        appointment={reviewDialog.appointment}
+        onSuccess={fetchAppointments}
       />
     </div>
   );

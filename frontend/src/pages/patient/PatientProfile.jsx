@@ -5,6 +5,7 @@ import { AuthContext } from '../../context/AuthContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import Avatar from '../../components/ui/Avatar';
+import ImageUpload from '../../components/ui/ImageUpload';
 import PageHeader from '../../components/ui/PageHeader';
 
 const PatientProfile = () => {
@@ -145,8 +146,12 @@ const PatientProfile = () => {
                 <input className="input-field" value={form.allergies} onChange={(e) => setForm({ ...form, allergies: e.target.value })} />
               </div>
               <div className="md:col-span-2">
-                <label className="label-field">Avatar URL</label>
-                <input className="input-field" value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.target.value })} />
+                <ImageUpload
+                  value={form.avatar}
+                  onChange={(url) => setForm({ ...form, avatar: url })}
+                  name={displayName}
+                  label="Profile photo"
+                />
               </div>
               <div>
                 <label className="label-field">Insurance provider</label>

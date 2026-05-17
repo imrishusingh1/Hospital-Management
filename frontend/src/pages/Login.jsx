@@ -80,7 +80,9 @@ const Login = () => {
           };
           const { data: approvalRes } = await api.post('/approvals/doctor', doctorRequest);
           if (approvalRes.emailSent) {
-            toast.success('Check your email for the approval link.');
+            toast.success(
+              'Signup submitted! Your account is pending administrator approval. You can sign in after it is approved.'
+            );
           } else {
             let copied = false;
             if (approvalRes.approvalLink) {
@@ -101,7 +103,9 @@ const Login = () => {
         } else {
           const { data: approvalRes } = await api.post('/approvals/admin', { email, password });
           if (approvalRes.emailSent) {
-            toast.success('Check your email for the approval link.');
+            toast.success(
+              'Signup submitted! Your account is pending administrator approval. You can sign in after it is approved.'
+            );
           } else {
             let copied = false;
             if (approvalRes.approvalLink) {

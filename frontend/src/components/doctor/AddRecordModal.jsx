@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Modal from '../ui/Modal';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { FileUp } from 'lucide-react';
 
 const AddRecordModal = ({ isOpen, onClose, patientId, patientName, onSuccess }) => {
+  const fileRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [pdfFile, setPdfFile] = useState(null);
   const [form, setForm] = useState({
     recordType: 'Lab Result',
     title: '',
     description: '',
-    fileUrl: '',
   });
 
   const handleSubmit = async (e) => {
@@ -17,13 +19,24 @@ const AddRecordModal = ({ isOpen, onClose, patientId, patientName, onSuccess }) 
     if (!patientId) return;
     setLoading(true);
     try {
-      await api.post('/records', { patientId, ...form });
+      const formData = new FormData();
+      formData.append('patientId', patientId);
+      formData.append('recordType', form.recordType);
+      formData.append('title', form.title);
+      formData.append('description', form.description || '');
+      if (pdfFile) formData.append('file', pdfFile);
+
+      await api.post('/records', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       toast.success('Medical record added');
-      setForm({ recordType: 'Lab Result', title: '', description: '', fileUrl: '' });
+      setForm({ recordType: 'Lab Result', title: '', description: '' });
+      setPdfFile(null);
+      if (fileRef.current) fileRef.current.value = '';
       onSuccess?.();
       onClose();
-    } catch {
-      toast.error('Failed to add record');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add record');
     } finally {
       setLoading(false);
     }
@@ -66,13 +79,22 @@ const AddRecordModal = ({ isOpen, onClose, patientId, patientName, onSuccess }) 
           />
         </div>
         <div>
-          <label className="label-field">File URL (optional)</label>
+          <label className="label-field">Test report PDF (optional)</label>
           <input
-            className="input-field"
-            value={form.fileUrl}
-            onChange={(e) => setForm({ ...form, fileUrl: e.target.value })}
-            placeholder="https://…"
+            ref={fileRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
           />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="w-full flex items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+          >
+            <FileUp size={18} />
+            {pdfFile ? pdfFile.name : 'Choose PDF file'}
+          </button>
         </div>
         <div className="flex gap-3 pt-2">
           <button type="button" className="btn-secondary flex-1" onClick={onClose}>

@@ -129,11 +129,27 @@ exports.getPatients = async (req, res, next) => {
 // @access  Private/Doctor
 exports.updateDoctorProfile = async (req, res, next) => {
     try {
+        const allowed = [
+            'firstName', 'lastName', 'specialization', 'department', 'bio', 'avatar',
+            'experienceYears', 'consultationFee', 'contactNumber', 'qualifications',
+            'isAvailable', 'availableDays', 'availableTimeSlots',
+        ];
+        const updates = {};
+        for (const key of allowed) {
+            if (req.body[key] !== undefined) updates[key] = req.body[key];
+        }
+
         const profile = await Doctor.findOneAndUpdate(
             { userId: req.user._id },
-            req.body,
+            updates,
             { new: true, runValidators: true }
         );
+        if (!profile) {
+            return res.status(404).json({ message: 'Doctor profile not found' });
+        }
+        if (updates.avatar) {
+            await User.findByIdAndUpdate(req.user._id, { avatar: updates.avatar });
+        }
         res.status(200).json({ success: true, data: profile });
     } catch (error) {
         next(error);
@@ -157,6 +173,61 @@ exports.updatePatientProfile = async (req, res, next) => {
         }
 
         res.status(200).json({ success: true, data: profile });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get user + role profile (Admin)
+// @route   GET /api/users/:id/profile
+exports.getUserProfile = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        let profile = null;
+        if (user.role === 'Doctor') {
+            profile = await Doctor.findOne({ userId: user._id });
+        } else if (user.role === 'Patient') {
+            profile = await Patient.findOne({ userId: user._id });
+        }
+
+        res.status(200).json({ success: true, data: { user, profile } });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update user + role profile (Admin)
+// @route   PUT /api/users/:id/profile
+exports.updateUserProfileAdmin = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const { email, status, avatar, profile } = req.body;
+        if (email) user.email = email;
+        if (status) user.status = status;
+        if (avatar !== undefined) user.avatar = avatar;
+        await user.save();
+
+        let updatedProfile = null;
+        if (user.role === 'Doctor' && profile) {
+            updatedProfile = await Doctor.findOneAndUpdate(
+                { userId: user._id },
+                profile,
+                { new: true, runValidators: true }
+            );
+        } else if (user.role === 'Patient' && profile) {
+            updatedProfile = await Patient.findOneAndUpdate(
+                { userId: user._id },
+                profile,
+                { new: true, runValidators: true }
+            );
+        }
+
+        const freshUser = await User.findById(user._id).select('-password');
+        res.status(200).json({ success: true, data: { user: freshUser, profile: updatedProfile } });
     } catch (error) {
         next(error);
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
@@ -10,12 +10,17 @@ const ApprovalStatus = () => {
   const [status, setStatus] = useState('loading');
   const [message, setMessage] = useState('');
 
+  const approveStarted = useRef(false);
+
   useEffect(() => {
     if (!token) {
       setStatus('error');
       setMessage('Missing approval token.');
       return;
     }
+    if (approveStarted.current) return;
+    approveStarted.current = true;
+
     const run = async () => {
       try {
         const res = await api.get(`/approvals/approve/${token}`, {
@@ -25,11 +30,16 @@ const ApprovalStatus = () => {
         setStatus('success');
         setMessage(typeof res.data === 'string' ? res.data : 'Request approved successfully.');
       } catch (e) {
-        setStatus('error');
         const msg =
           e.response?.data?.message ||
           (typeof e.response?.data === 'string' ? e.response.data : null) ||
           'Approval failed or link expired.';
+        if (typeof msg === 'string' && /already approved/i.test(msg)) {
+          setStatus('success');
+          setMessage(msg);
+          return;
+        }
+        setStatus('error');
         setMessage(msg);
       }
     };

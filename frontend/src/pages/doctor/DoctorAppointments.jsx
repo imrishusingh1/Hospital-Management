@@ -126,12 +126,20 @@ const DoctorAppointments = () => {
             </>
           )}
           {row.status === 'Confirmed' && (
-            <button 
-              onClick={() => setPrescriptionModal({ isOpen: true, appointmentId: row._id, patientName: `${row.patientId?.firstName} ${row.patientId?.lastName}` })}
-              className="px-3 py-1.5 text-xs font-bold text-[#1db1d7] bg-[#1db1d7]/10 hover:bg-[#1db1d7]/20 rounded-lg transition-colors flex items-center"
-            >
-              <FilePlus size={14} className="mr-1" /> Write Prescription
-            </button>
+            <>
+              <button 
+                onClick={() => setPrescriptionModal({ isOpen: true, appointmentId: row._id, patientName: `${row.patientId?.firstName} ${row.patientId?.lastName}` })}
+                className="px-3 py-1.5 text-xs font-bold text-[#1db1d7] bg-[#1db1d7]/10 hover:bg-[#1db1d7]/20 rounded-lg transition-colors flex items-center"
+              >
+                <FilePlus size={14} className="mr-1" /> Write Prescription
+              </button>
+              <button 
+                onClick={() => updateStatus(row._id, 'Completed')}
+                className="px-3 py-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors flex items-center"
+              >
+                <CheckCircle size={14} className="mr-1" /> Mark Completed
+              </button>
+            </>
           )}
           {row.status === 'Completed' && (
             <button 

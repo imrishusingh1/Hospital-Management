@@ -3,11 +3,16 @@ const Notification = require('../models/Notification');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 
+function fileUrlFromRequest(req) {
+  if (req.file) return `/uploads/documents/${req.file.filename}`;
+  return req.body.fileUrl || '';
+}
+
 // @desc    Create a medical record (Doctor/Admin)
 // @route   POST /api/records
 exports.createMedicalRecord = async (req, res, next) => {
   try {
-    const { patientId, recordType, title, description, fileUrl } = req.body;
+    const { patientId, recordType, title, description } = req.body;
     if (!patientId || !recordType || !title) {
       return res.status(400).json({ message: 'patientId, recordType, and title are required' });
     }
@@ -22,10 +27,11 @@ exports.createMedicalRecord = async (req, res, next) => {
     const record = await MedicalRecord.create({
       patientId,
       doctorId: doctorProfileId,
+      uploadedBy: 'Doctor',
       recordType,
       title,
       description,
-      fileUrl,
+      fileUrl: fileUrlFromRequest(req) || undefined,
     });
 
     const patientProfile = await Patient.findById(patientId);
@@ -37,6 +43,34 @@ exports.createMedicalRecord = async (req, res, next) => {
         type: 'MedicalRecord',
       });
     }
+
+    res.status(201).json({ success: true, data: record });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Patient uploads own test report (optional PDF)
+// @route   POST /api/records/my-upload
+exports.createPatientRecord = async (req, res, next) => {
+  try {
+    const patient = await Patient.findOne({ userId: req.user._id });
+    if (!patient) return res.status(404).json({ message: 'Patient profile not found' });
+
+    const { recordType, title, description } = req.body;
+    if (!title) {
+      return res.status(400).json({ message: 'title is required' });
+    }
+
+    const record = await MedicalRecord.create({
+      patientId: patient._id,
+      doctorId: null,
+      uploadedBy: 'Patient',
+      recordType: recordType || 'Lab Result',
+      title,
+      description,
+      fileUrl: fileUrlFromRequest(req) || undefined,
+    });
 
     res.status(201).json({ success: true, data: record });
   } catch (error) {
