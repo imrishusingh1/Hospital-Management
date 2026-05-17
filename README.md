@@ -1,6 +1,6 @@
-# Curalync - Modern Healthcare Management Platform
+# Curalync - Enterprise Telehealth & Clinical Operations Ecosystem
 
-A complete, enterprise-grade MERN stack application for managing hospital workflows. Designed with a premium, fully-responsive UI, this platform features strict role-based access control, real-time communication suites, and dynamic appointment lifecycle management for Admins, Doctors, and Patients.
+A comprehensive, production-ready MERN stack ecosystem engineered for high-scale clinical operations. Designed with a premium, fully-responsive UI, Curalync features strict role-based access control, integrated real-time telemedicine suites, and dynamic patient lifecycle routing for Admins, Doctors, and Patients.
 
 ## 🚀 Key Features
 
