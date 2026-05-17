@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import api from '../services/api';
 
-const { Shield, Star, Camera, CheckCircle2, ChevronLeft, ChevronRight, Phone, Stethoscope, Heart, Asterisk, Play, ArrowRight, Plus, ClipboardList, Clock, HeartHandshake, Calendar, Building2, Briefcase, MessageCircle, X } = Icons;
+const { Shield, Star, Camera, CheckCircle2, ChevronLeft, ChevronRight, Phone, Stethoscope, Heart, Asterisk, Play, ArrowRight, Plus, ClipboardList, Clock, HeartHandshake, Calendar, Building2, Briefcase, MessageCircle, X, Menu } = Icons;
 
 const resolveMediaUrl = (url) => {
   if (!url) return '';
@@ -22,14 +22,17 @@ const Landing = () => {
   const [heroDoctors, setHeroDoctors] = useState([]);
   const [services, setServices] = useState([]);
   const [publicReviews, setPublicReviews] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [faqs, setFaqs] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [doctorsRes, servicesRes, reviewsRes] = await Promise.all([
+        const [doctorsRes, servicesRes, reviewsRes, faqsRes] = await Promise.all([
           api.get('/public/doctors'),
           api.get('/services'),
-          api.get('/reviews/public')
+          api.get('/reviews/public'),
+          api.get('/faqs')
         ]);
         
         if (doctorsRes.data.data && doctorsRes.data.data.length > 0) {
@@ -55,6 +58,10 @@ const Landing = () => {
         if (reviewsRes.data.data) {
           setPublicReviews(reviewsRes.data.data);
         }
+
+        if (faqsRes.data.data) {
+          setFaqs(faqsRes.data.data);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -64,6 +71,20 @@ const Landing = () => {
 
   const getPrevIndex = () => (currentDocIndex - 1 + heroDoctors.length) % heroDoctors.length;
   const getNextIndex = () => (currentDocIndex + 1) % heroDoctors.length;
+
+  // Close mobile menu on scroll or outside click
+  useEffect(() => {
+    const handleScroll = () => setMobileMenuOpen(false);
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('#mobile-nav')) setMobileMenuOpen(false);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const scrollToSection = (e, id) => {
     e.preventDefault();
@@ -88,28 +109,6 @@ const Landing = () => {
     setOpenFaq(openFaq === index ? -1 : index);
   };
 
-  const faqData = [
-    {
-      question: "Do you accept insurance?",
-      answer: "We accept most major insurance plans to ensure your medical care remains affordable and accessible."
-    },
-    {
-      question: "How do I book or reschedule an appointment?",
-      answer: "You can easily book, cancel, or reschedule your visits directly through our secure patient dashboard anytime."
-    },
-    {
-      question: "Can I consult a doctor online?",
-      answer: "Yes, our platform offers secure video consultations with certified specialists from the comfort of home"
-    },
-    {
-      question: "Do your doctors issue prescriptions?",
-      answer: "Yes, our doctors can issue and send prescriptions directly to your preferred local pharmacy after a consultation."
-    },
-    {
-      question: "Is my medical information kept private?",
-      answer: "Absolutely. Our platform is fully HIPAA-compliant and uses advanced encryption to protect your sensitive health data."
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-white font-sans overflow-hidden">
@@ -118,13 +117,13 @@ const Landing = () => {
       <section className="relative w-full min-h-screen bg-gradient-to-br from-[#1cb1d6] via-[#1691b3] to-[#117694] text-white">
         
         {/* Navbar */}
-        <div className="absolute top-6 left-0 w-full z-50 px-4">
-          <nav className="max-w-[1200px] mx-auto px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-between shadow-sm">
+        <div id="mobile-nav" className="absolute top-6 left-0 w-full z-50 px-4">
+          <nav className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-between shadow-sm">
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#1db1d7] shadow-sm">
                 <Plus strokeWidth={4} size={20} />
               </div>
-              <span className="text-2xl font-bold tracking-tight text-white font-display">hospitalflow</span>
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-white font-display">hospitalflow</span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8 font-medium text-sm text-white/90">
@@ -134,37 +133,66 @@ const Landing = () => {
               <a href="#process" onClick={(e) => scrollToSection(e, 'process')} className="hover:text-white transition-colors">Process</a>
             </div>
 
-            <div className="flex items-center space-x-4 mr-1">
+            <div className="flex items-center space-x-3">
               <Link to="/login" className="hidden md:block text-sm font-bold text-white hover:text-white/80 transition-colors">
                 Log In
               </Link>
-              <Link to="/login" className="bg-white text-slate-900 px-6 py-2.5 rounded-full font-bold text-sm hover:bg-gray-100 transition-colors shadow-sm">
+              <Link to="/login" className="hidden md:block bg-white text-slate-900 px-5 py-2.5 rounded-full font-bold text-sm hover:bg-gray-100 transition-colors shadow-sm">
                 Contact us
               </Link>
+              {/* Hamburger - mobile only */}
+              <button
+                className="md:hidden w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white border border-white/20"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+              </button>
             </div>
           </nav>
+
+          {/* Mobile Menu Dropdown */}
+          {mobileMenuOpen && (
+            <div className="md:hidden max-w-[1200px] mx-auto mt-2 bg-white/15 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl">
+              <div className="flex flex-col space-y-4">
+                <a href="#services" onClick={(e) => { scrollToSection(e, 'services'); setMobileMenuOpen(false); }} className="text-white font-semibold text-base py-2 border-b border-white/10">Services</a>
+                <a href="#doctors" onClick={(e) => { scrollToSection(e, 'doctors'); setMobileMenuOpen(false); }} className="text-white font-semibold text-base py-2 border-b border-white/10">Doctors</a>
+                <a href="#about" onClick={(e) => { scrollToSection(e, 'about'); setMobileMenuOpen(false); }} className="text-white font-semibold text-base py-2 border-b border-white/10">About Us</a>
+                <a href="#process" onClick={(e) => { scrollToSection(e, 'process'); setMobileMenuOpen(false); }} className="text-white font-semibold text-base py-2 border-b border-white/10">Process</a>
+                <a href="#testimonials" onClick={(e) => { scrollToSection(e, 'testimonials'); setMobileMenuOpen(false); }} className="text-white font-semibold text-base py-2 border-b border-white/10">Testimonials</a>
+                <div className="flex gap-3 pt-2">
+                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center bg-white text-slate-900 px-4 py-3 rounded-full font-bold text-sm hover:bg-gray-100 transition-colors">
+                    Log In
+                  </Link>
+                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center bg-white/20 border border-white/20 text-white px-4 py-3 rounded-full font-bold text-sm hover:bg-white/30 transition-colors">
+                    Contact us
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Hero Content */}
-        <div className="max-w-[1400px] mx-auto px-8 pt-40 pb-20 grid lg:grid-cols-2 gap-12 items-center min-h-screen">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8 pt-32 sm:pt-40 pb-20 grid lg:grid-cols-2 gap-12 items-center min-h-screen">
           
           {/* Left Text */}
-          <div className="pr-12">
-            <div className="flex items-center space-x-2 text-white font-medium mb-6 uppercase tracking-wider text-sm opacity-90">
+          <div className="pr-0 lg:pr-12 text-center lg:text-left">
+            <div className="flex items-center justify-center lg:justify-start space-x-2 text-white font-medium mb-6 uppercase tracking-wider text-sm opacity-90">
               <span>TRUE 24/7</span>
               <span className="text-white/40">|</span>
               <span>CARE WHEN IT COUNTS</span>
             </div>
 
-            <h1 className="text-6xl lg:text-[5rem] font-bold leading-[1.05] tracking-tight mb-8 font-display">
+            <h1 className="text-4xl sm:text-5xl lg:text-[5rem] font-bold leading-[1.05] tracking-tight mb-8 font-display">
               Real doctors, <br />real care always.
             </h1>
             
-            <p className="text-lg text-white/80 mb-10 max-w-lg leading-relaxed font-light">
+            <p className="text-base sm:text-lg text-white/80 mb-10 max-w-lg leading-relaxed font-light mx-auto lg:mx-0">
               Discover experienced doctors, compare specialties, and book trusted appointments easily online.
             </p>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
               <Link to="/login" className="bg-white text-slate-900 px-8 py-3.5 rounded-full font-semibold hover:bg-gray-100 transition-colors shadow-lg">
                 See Doctors
               </Link>
@@ -175,7 +203,7 @@ const Landing = () => {
           </div>
 
           {/* Right Visual Carousel */}
-          <div className="relative h-[600px] flex items-center justify-center">
+          <div className="relative h-[500px] sm:h-[600px] flex items-center justify-center mt-8 lg:mt-0">
             
             {heroDoctors.length > 0 ? (
               <>
@@ -196,7 +224,7 @@ const Landing = () => {
                 )}
 
                 {/* Center Main Card */}
-                <div className="relative z-10 w-[380px] h-[500px] bg-white rounded-[2.5rem] p-3 shadow-2xl overflow-hidden group">
+                <div className="relative z-10 w-[300px] sm:w-[380px] h-[420px] sm:h-[500px] bg-white rounded-[2.5rem] p-3 shadow-2xl overflow-hidden group">
                   <div className="absolute top-6 right-6 bg-slate-900/80 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center z-20">
                     <Star fill="currentColor" size={12} className="mr-1 text-yellow-400" />
                     {heroDoctors[currentDocIndex].rating}
@@ -287,7 +315,7 @@ const Landing = () => {
 
       {/* About Section */}
       <section id="about" className="py-24 bg-[#FAFBFC]">
-        <div className="max-w-[1200px] mx-auto px-8">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center text-[#107c9f] font-semibold text-sm mb-6">
@@ -296,12 +324,12 @@ const Landing = () => {
               </div>
               About hospitalflow
             </div>
-            <h2 className="text-4xl md:text-5xl font-semibold text-slate-900 tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-slate-900 tracking-tight leading-tight">
               We are a modern healthcare team focused on connecting you with trusted doctors and making quality care easy, clear, and accessible anytime.
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 h-[400px]">
+          <div className="grid md:grid-cols-3 gap-6 md:h-[400px]">
             {/* Card 1 */}
             <div className="bg-gradient-to-b from-[#1db1d7] to-[#073c52] rounded-[2rem] p-8 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-lg">
               <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-8 shadow-xl relative z-10">
@@ -365,22 +393,22 @@ const Landing = () => {
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-24 bg-[#FAFBFC]">
-        <div className="max-w-[1400px] mx-auto px-8">
+      <section id="services" className="py-16 sm:py-24 bg-[#FAFBFC]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8">
           
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
             <div className="inline-flex items-center text-[#107c9f] font-semibold text-sm mb-6">
               <div className="w-5 h-5 rounded-full bg-[#107c9f] text-white flex items-center justify-center mr-2">
                 <Shield size={12} fill="currentColor" />
               </div>
               Our Services
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
               All your healthcare <br />needs, one place.
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
             
             {services.length > 0 ? (
               services.map((service, idx) => {
@@ -434,17 +462,17 @@ const Landing = () => {
       </section>
 
       {/* How it works Section */}
-      <section id="process" className="py-32 bg-[#0e4356] text-white">
-        <div className="max-w-[1200px] mx-auto px-8 text-center">
+      <section id="process" className="py-20 sm:py-32 bg-[#0e4356] text-white">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-8 text-center">
           <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 mb-8">
             <span className="flex items-center justify-center bg-white/20 text-white w-5 h-5 rounded-full text-xs mr-1"><Plus size={10} strokeWidth={3} /></span>
             <span className="text-sm font-medium">How it works</span>
           </div>
-          <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-24">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-16 sm:mb-24">
             Your health journey<br />in three simple steps.
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-12">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-10 sm:gap-12">
             {/* Step 1 */}
             <div className="flex flex-col items-center">
               <div className="relative mb-8">
@@ -483,9 +511,9 @@ const Landing = () => {
       </section>
 
       {/* Specialized Doctors Section */}
-      <section id="doctors" className="py-24 bg-[#FAFBFC]">
-        <div className="max-w-[1400px] mx-auto px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16">
+      <section id="doctors" className="py-16 sm:py-24 bg-[#FAFBFC]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 sm:mb-16">
             <div>
               <div className="inline-flex items-center text-[#107c9f] font-semibold text-sm mb-6">
                 <div className="w-5 h-5 rounded-full bg-[#107c9f] text-white flex items-center justify-center mr-2">
@@ -493,7 +521,7 @@ const Landing = () => {
                 </div>
                 Specialized Doctors
               </div>
-              <h2 className="text-5xl font-bold text-slate-900 tracking-tight leading-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
                 Dedicated doctors,<br />committed to your care
               </h2>
             </div>
@@ -540,9 +568,9 @@ const Landing = () => {
           )}
 
           {heroDoctors.length > 0 ? (
-            <div className="grid lg:grid-cols-[1fr_1.5fr] gap-0 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-6">
+            <div className="grid lg:grid-cols-[1fr_1.5fr] gap-0 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-4 sm:p-6">
               {/* Left Image Side */}
-              <div className="relative h-[500px] rounded-[1.5rem] overflow-hidden bg-slate-200">
+              <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] rounded-[1.5rem] overflow-hidden bg-slate-200">
                 <img src={heroDoctors[specDocIndex].img} className="w-full h-full object-cover object-top" alt={heroDoctors[specDocIndex].name} />
                 {/* Pill */}
                 <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] bg-white rounded-full p-2 flex items-center shadow-xl">
@@ -617,24 +645,24 @@ const Landing = () => {
       </section>
 
       {/* Why Choose Section */}
-      <section className="py-24 bg-[#FAFBFC]">
-        <div className="max-w-[1400px] mx-auto px-8">
-          <div className="text-center mb-16">
+      <section className="py-16 sm:py-24 bg-[#FAFBFC]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8">
+          <div className="text-center mb-12 sm:mb-16">
             <div className="inline-flex items-center text-[#107c9f] font-semibold text-sm mb-6">
               <div className="w-5 h-5 rounded-full bg-[#107c9f] text-white flex items-center justify-center mr-2">
                 <Shield size={12} fill="currentColor" />
               </div>
               Why hospitalflow?
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
               Why Choose hospitalflow<br />for Better Healthcare
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
             {/* Card 1 */}
-            <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col h-[500px]">
-              <div className="h-[55%] bg-gradient-to-br from-[#073c52] to-[#107c9f] p-8 relative overflow-hidden flex flex-col justify-center space-y-3">
+            <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col sm:col-span-2 md:col-span-1 h-auto md:h-[500px]">
+              <div className="h-64 md:h-[55%] bg-gradient-to-br from-[#073c52] to-[#107c9f] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-center space-y-3">
                  {heroDoctors.length > 0 ? (
                    [...heroDoctors].sort(() => 0.5 - Math.random()).slice(0, 3).map((doc, idx) => {
                      const styles = [
@@ -720,23 +748,23 @@ const Landing = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-24 bg-[#FAFBFC]">
-        <div className="max-w-[1400px] mx-auto px-8">
-          <div className="text-center mb-16">
+      <section id="testimonials" className="py-16 sm:py-24 bg-[#FAFBFC]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8">
+          <div className="text-center mb-12 sm:mb-16">
             <div className="inline-flex items-center text-[#107c9f] font-semibold text-sm mb-6">
               <div className="w-5 h-5 rounded-full bg-[#107c9f] text-white flex items-center justify-center mr-2">
                 <Shield size={12} fill="currentColor" />
               </div>
               Testimonials
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
               Trusted by thousands<br />of happy patients.
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {publicReviews.length > 0 ? publicReviews.slice(0, 3).map((review, idx) => (
-              <div key={review._id || idx} className="rounded-[3rem] p-8 shadow-2xl border border-white/10 flex flex-col justify-end h-[520px] relative overflow-hidden group transform hover:-translate-y-2 transition-all duration-500">
+              <div key={review._id || idx} className="rounded-[3rem] p-8 shadow-2xl border border-white/10 flex flex-col justify-end h-[420px] sm:h-[520px] relative overflow-hidden group transform hover:-translate-y-2 transition-all duration-500">
                 <img 
                   src={resolveMediaUrl(review.patientId?.avatar) || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"} 
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
@@ -764,9 +792,9 @@ const Landing = () => {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-24 bg-[#FAFBFC]">
-        <div className="max-w-[1400px] mx-auto px-8">
-          <div className="grid md:grid-cols-2 gap-16 mb-24">
+      <section className="py-16 sm:py-24 bg-[#FAFBFC]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8">
+          <div className="grid md:grid-cols-2 gap-10 sm:gap-16 mb-16 sm:mb-24">
             
             {/* Left FAQ Intro */}
             <div>
@@ -776,7 +804,7 @@ const Landing = () => {
                 </div>
                 FAQ
               </div>
-              <h2 className="text-4xl md:text-6xl font-bold text-slate-900 tracking-tight leading-tight mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-slate-900 tracking-tight leading-tight mb-6">
                 Everything you<br />need to know today
               </h2>
               <p className="text-slate-500 text-lg mb-10 max-w-md">Browse through these common inquiries to better understand our patient-focused medical platform.</p>
@@ -792,7 +820,7 @@ const Landing = () => {
 
             {/* Right Accordion List */}
             <div className="space-y-6">
-              {faqData.map((faq, index) => (
+              {faqs.length > 0 ? faqs.map((faq, index) => (
                 <div key={index} className="border-b border-gray-200 pb-6">
                   <div 
                     className="flex justify-between items-center cursor-pointer"
@@ -819,7 +847,9 @@ const Landing = () => {
                     </motion.p>
                   )}
                 </div>
-              ))}
+              )) : (
+                <div className="text-slate-400 text-center py-8">No FAQs available yet.</div>
+              )}
             </div>
           </div>
 
@@ -857,21 +887,21 @@ const Landing = () => {
           ));
         })()}
 
-        <div className="max-w-[1000px] mx-auto px-8 text-center relative z-10 mb-32">
+        <div className="max-w-[1000px] mx-auto px-4 sm:px-8 text-center relative z-10 mb-16 sm:mb-32">
           <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 mb-8">
             <span className="flex items-center justify-center bg-white/20 text-white w-5 h-5 rounded-full text-xs mr-1"><Plus size={10} strokeWidth={3} /></span>
             <span className="text-sm font-medium">Get started</span>
           </div>
           
-          <h2 className="text-6xl md:text-7xl font-bold tracking-tight mb-8">
+          <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight mb-8">
             Your better health<br />journey starts here.
           </h2>
           
-          <p className="text-lg text-white/80 max-w-xl mx-auto mb-10 leading-relaxed">
+          <p className="text-base sm:text-lg text-white/80 max-w-xl mx-auto mb-10 leading-relaxed">
             Discover experienced healthcare professionals and manage all your medical visits in one convenient, secure place.
           </p>
 
-          <div className="flex items-center justify-center space-x-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link to="/login" className="bg-white text-slate-900 px-8 py-3.5 rounded-full font-bold hover:bg-gray-100 transition-colors shadow-lg">
               Explore services
             </Link>
@@ -883,11 +913,11 @@ const Landing = () => {
 
         {/* Footer Container */}
         <div className="max-w-[1400px] mx-auto px-4 relative z-10">
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-[2rem] p-12 flex flex-col justify-between">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-[2rem] p-6 sm:p-10 lg:p-12 flex flex-col justify-between">
             
-            <div className="flex flex-col lg:flex-row justify-between items-start gap-12 mb-16">
+            <div className="flex flex-col lg:flex-row justify-between items-start gap-8 sm:gap-12 mb-10 sm:mb-16">
               {/* Brand & Newsletter */}
-              <div className="max-w-sm">
+              <div className="w-full max-w-sm">
                 <div className="flex items-center space-x-2 mb-6">
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#1db1d7]">
                     <Plus strokeWidth={4} size={20} />
@@ -906,13 +936,13 @@ const Landing = () => {
               </div>
 
               {/* Links */}
-              <div className="flex space-x-20 lg:space-x-32">
+              <div className="flex gap-10 sm:gap-16 lg:gap-32 flex-wrap">
                 <div>
                   <h4 className="text-lg font-bold mb-6">Navigation</h4>
                   <ul className="space-y-4 text-white/80 font-medium text-sm">
                     <li><a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({top: 0, behavior: 'smooth'})}} className="hover:text-white transition-colors">Home</a></li>
                     <li><a href="#about" onClick={(e) => scrollToSection(e, 'about')} className="hover:text-white transition-colors">About us</a></li>
-                    <li><a href="#about" onClick={(e) => scrollToSection(e, 'about')} className="hover:text-white transition-colors">Why Choose us</a></li>
+                    <li><a href="#about" onClick={(e) => scrollToSection(e, 'about')} className="hover:text-white transition-colors whitespace-nowrap">Why Choose us</a></li>
                     <li><a href="#services" onClick={(e) => scrollToSection(e, 'services')} className="hover:text-white transition-colors">Services</a></li>
                     <li><a href="#doctors" onClick={(e) => scrollToSection(e, 'doctors')} className="hover:text-white transition-colors">Doctors</a></li>
                     <li><a href="#testimonials" onClick={(e) => scrollToSection(e, 'testimonials')} className="hover:text-white transition-colors">Testimonials</a></li>

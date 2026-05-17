@@ -46,6 +46,7 @@ app.use('/api/public', require('./routes/publicRoutes'));
 app.use('/api/uploads', require('./routes/uploadRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/services', require('./routes/serviceRoutes'));
+app.use('/api/faqs', require('./routes/faqRoutes'));
 
 // Basic Route
 app.get('/', (req, res) => {

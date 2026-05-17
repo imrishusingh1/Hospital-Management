@@ -24,6 +24,7 @@ import DoctorProfile from './pages/doctor/DoctorProfile';
 import UserManagement from './pages/admin/UserManagement';
 import AllAppointments from './pages/admin/AllAppointments';
 import ServiceManagement from './pages/admin/ServiceManagement';
+import FAQManagement from './pages/admin/FAQManagement';
 
 import NotFound from './pages/NotFound';
 import ApprovalStatus from './pages/ApprovalStatus';
@@ -57,6 +58,7 @@ function App() {
               <Route path="/admin/users" element={<UserManagement />} />
               <Route path="/admin/appointments" element={<AllAppointments />} />
               <Route path="/admin/services" element={<ServiceManagement />} />
+              <Route path="/admin/faqs" element={<FAQManagement />} />
             </Route>
           </Route>
 

@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { LogOut, Home, Users, Calendar, Activity, Settings, Plus, Menu, X, FileText, FileClock, Briefcase } from 'lucide-react';
+import { LogOut, Home, Users, Calendar, Activity, Settings, Plus, Menu, X, FileText, FileClock, Briefcase, HelpCircle } from 'lucide-react';
 import Notifications from '../components/Notifications';
 import Avatar from '../components/ui/Avatar';
 
@@ -18,6 +18,7 @@ const DashboardLayout = () => {
           { name: 'Users', path: '/admin/users', icon: Users },
           { name: 'Appointments', path: '/admin/appointments', icon: Calendar },
           { name: 'Services', path: '/admin/services', icon: Briefcase },
+          { name: 'FAQs', path: '/admin/faqs', icon: HelpCircle },
         ];
       case 'Doctor':
         return [
