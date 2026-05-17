@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { LogOut, Home, Users, Calendar, Activity, Settings, Plus, Menu, X, FileText, FileClock, Briefcase, HelpCircle } from 'lucide-react';
+import { LogOut, Home, Users, Calendar, Activity, Settings, Plus, Menu, X, FileText, FileClock, Briefcase, HelpCircle, MessageCircle } from 'lucide-react';
 import Notifications from '../components/Notifications';
 import Avatar from '../components/ui/Avatar';
 
@@ -25,6 +25,7 @@ const DashboardLayout = () => {
           { name: 'Dashboard', path: '/doctor', icon: Home },
           { name: 'Appointments', path: '/doctor/appointments', icon: Calendar },
           { name: 'Patients', path: '/doctor/patients', icon: Users },
+          { name: 'Chat', path: '/doctor/chat', icon: MessageCircle },
           { name: 'Profile', path: '/doctor/profile', icon: Settings },
         ];
       case 'Patient':
@@ -32,6 +33,7 @@ const DashboardLayout = () => {
           { name: 'Dashboard', path: '/patient', icon: Home },
           { name: 'My Appointments', path: '/patient/appointments', icon: Calendar },
           { name: 'Book Appointment', path: '/patient/book', icon: Plus },
+          { name: 'Chat', path: '/patient/chat', icon: MessageCircle },
           { name: 'Prescriptions', path: '/patient/prescriptions', icon: FileText },
           { name: 'Medical Records', path: '/patient/records', icon: FileClock },
           { name: 'Profile', path: '/patient/profile', icon: Settings },

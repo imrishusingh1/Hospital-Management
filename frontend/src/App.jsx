@@ -25,6 +25,8 @@ import UserManagement from './pages/admin/UserManagement';
 import AllAppointments from './pages/admin/AllAppointments';
 import ServiceManagement from './pages/admin/ServiceManagement';
 import FAQManagement from './pages/admin/FAQManagement';
+import PatientChat from './pages/patient/PatientChat';
+import DoctorChat from './pages/doctor/DoctorChat';
 
 import NotFound from './pages/NotFound';
 import ApprovalStatus from './pages/ApprovalStatus';
@@ -69,6 +71,7 @@ function App() {
               <Route path="/doctor/appointments" element={<DoctorAppointments />} />
               <Route path="/doctor/patients" element={<DoctorPatients />} />
               <Route path="/doctor/profile" element={<DoctorProfile />} />
+              <Route path="/doctor/chat" element={<DoctorChat />} />
             </Route>
           </Route>
 
@@ -81,6 +84,7 @@ function App() {
               <Route path="/patient/prescriptions" element={<PatientPrescriptions />} />
               <Route path="/patient/records" element={<PatientRecords />} />
               <Route path="/patient/profile" element={<PatientProfile />} />
+              <Route path="/patient/chat" element={<PatientChat />} />
             </Route>
           </Route>
           
