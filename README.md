@@ -1,4 +1,4 @@
-# Synapse Healthflow - Modern Healthcare Management Platform
+# Curalync - Modern Healthcare Management Platform
 
 A complete, enterprise-grade MERN stack application for managing hospital workflows. Designed with a premium, fully-responsive UI, this platform features strict role-based access control, real-time communication suites, and dynamic appointment lifecycle management for Admins, Doctors, and Patients.
 
@@ -85,6 +85,6 @@ npm run dev
 ```
 
 ### 4. Default Credentials (from Seed)
-- **Admin**: `admin@healthflow.com` / `password123`
-- **Doctor**: `doctor@healthflow.com` / `password123`
-- **Patient**: `patient@healthflow.com` / `password123`
+- **Admin**: `admin@curalync.com` / `password123`
+- **Doctor**: `doctor@curalync.com` / `password123`
+- **Patient**: `patient@curalync.com` / `password123`

@@ -154,7 +154,7 @@ const Login = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4 shadow-lg border border-white/30">
               <HeartPulse size={32} className="text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-white tracking-tight">hospitalflow</h2>
+            <h2 className="text-3xl font-bold text-white tracking-tight">Curalync</h2>
             <p className="text-white/70 mt-2 text-sm">
               {isLogin ? 'Welcome back to your healthcare portal' : 'Create your account to get started'}
             </p>

@@ -17,7 +17,7 @@ export function mapPublicDoctor(d) {
     hasPhoto,
     bio: d.bio || `Experienced ${d.specialization} providing compassionate, patient-first care.`,
     experience: d.experienceYears ? `${d.experienceYears}+ Years` : '—',
-    hospital: d.department || 'hospitalflow Clinic',
+    hospital: d.department || 'Curalync Clinic',
     availability: formatDoctorAvailability(d),
     isAvailable: d.isAvailable !== false,
     availableDays: d.availableDays || [],

@@ -19,7 +19,7 @@ const seedData = async () => {
 
     // Create Admin
     await User.create({
-      email: 'admin@healthflow.com',
+      email: 'admin@curalync.com',
       password: 'password123',
       role: 'Admin',
       status: 'Active'
@@ -27,7 +27,7 @@ const seedData = async () => {
 
     // Create Doctors
     const doctorUser1 = await User.create({
-      email: 'doctor@healthflow.com',
+      email: 'doctor@curalync.com',
       password: 'password123',
       role: 'Doctor',
       status: 'Active'
@@ -45,7 +45,7 @@ const seedData = async () => {
     });
 
     const doctorUser2 = await User.create({
-      email: 'doctor2@healthflow.com',
+      email: 'doctor2@curalync.com',
       password: 'password123',
       role: 'Doctor',
       status: 'Active'
@@ -64,7 +64,7 @@ const seedData = async () => {
 
     // Create Patients
     const patientUser1 = await User.create({
-      email: 'patient@healthflow.com',
+      email: 'patient@curalync.com',
       password: 'password123',
       role: 'Patient',
       status: 'Active'
@@ -82,7 +82,7 @@ const seedData = async () => {
     });
 
     const patientUser2 = await User.create({
-      email: 'patient2@healthflow.com',
+      email: 'patient2@curalync.com',
       password: 'password123',
       role: 'Patient',
       status: 'Active'
@@ -99,7 +99,7 @@ const seedData = async () => {
     });
 
     const patientUser3 = await User.create({
-      email: 'patient3@healthflow.com',
+      email: 'patient3@curalync.com',
       password: 'password123',
       role: 'Patient',
       status: 'Active'

@@ -68,7 +68,7 @@ const DashboardLayout = () => {
             <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center text-brand-600 shrink-0 shadow-sm">
               <Plus strokeWidth={3} size={18} />
             </div>
-            <span className="text-lg font-bold tracking-tight">hospitalflow</span>
+            <span className="text-lg font-bold tracking-tight">Curalync</span>
           </div>
           <button
             type="button"

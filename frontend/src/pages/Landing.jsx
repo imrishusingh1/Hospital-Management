@@ -123,7 +123,7 @@ const Landing = () => {
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#1db1d7] shadow-sm">
                 <Plus strokeWidth={4} size={20} />
               </div>
-              <span className="text-xl sm:text-2xl font-bold tracking-tight text-white font-display">hospitalflow</span>
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-white font-display">Curalync</span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8 font-medium text-sm text-white/90">
@@ -322,7 +322,7 @@ const Landing = () => {
               <div className="w-5 h-5 rounded-full bg-[#107c9f] text-white flex items-center justify-center mr-2">
                 <Shield size={12} fill="currentColor" />
               </div>
-              About hospitalflow
+              About Curalync
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-slate-900 tracking-tight leading-tight">
               We are a modern healthcare team focused on connecting you with trusted doctors and making quality care easy, clear, and accessible anytime.
@@ -545,7 +545,7 @@ const Landing = () => {
 
           {heroDoctors.length > 0 && (
             <div className="mb-12">
-              <p className="text-slate-500 mb-6 font-medium">{heroDoctors.length} active specialists on hospitalflow</p>
+              <p className="text-slate-500 mb-6 font-medium">{heroDoctors.length} active specialists on Curalync</p>
               <div className="flex space-x-6 overflow-x-auto pb-6 scrollbar-hide">
                 {heroDoctors.map((doc, idx) => (
                   <div 
@@ -652,10 +652,10 @@ const Landing = () => {
               <div className="w-5 h-5 rounded-full bg-[#107c9f] text-white flex items-center justify-center mr-2">
                 <Shield size={12} fill="currentColor" />
               </div>
-              Why hospitalflow?
+              Why Curalync?
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
-              Why Choose hospitalflow<br />for Better Healthcare
+              Why Choose Curalync<br />for Better Healthcare
             </h2>
           </div>
 
@@ -861,7 +861,7 @@ const Landing = () => {
                </div>
                <div>
                  <h3 className="text-3xl font-bold mb-2">Still have more questions?</h3>
-                 <p className="text-white/80 max-w-md text-sm md:text-base">Book a call with our friendly team to learn how hospitalflow simplifies your healthcare journey.</p>
+                 <p className="text-white/80 max-w-md text-sm md:text-base">Book a call with our friendly team to learn how Curalync simplifies your healthcare journey.</p>
                </div>
              </div>
           </div>
@@ -922,7 +922,7 @@ const Landing = () => {
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#1db1d7]">
                     <Plus strokeWidth={4} size={20} />
                   </div>
-                  <span className="text-2xl font-bold tracking-tight">hospitalflow</span>
+                  <span className="text-2xl font-bold tracking-tight">Curalync</span>
                 </div>
                 <p className="text-white/70 mb-8 text-sm leading-relaxed">A comprehensive hospital management platform providing seamless healthcare experiences.</p>
                 

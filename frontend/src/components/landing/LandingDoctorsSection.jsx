@@ -62,7 +62,7 @@ const LandingDoctorsSection = () => {
               <br />
               committed to your care
             </h2>
-            <p className="text-slate-500 mt-3">{count} active specialists on hospitalflow</p>
+            <p className="text-slate-500 mt-3">{count} active specialists on Curalync</p>
           </div>
           {list.length > 1 && (
             <div className="flex space-x-4 mt-8 md:mt-0 pb-4">
