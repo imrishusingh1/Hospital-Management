@@ -130,7 +130,7 @@ exports.getMessages = async (req, res) => {
 // @POST /api/chat/send
 exports.sendMessage = async (req, res) => {
   try {
-    const { conversationId, text, attachment } = req.body;
+    const { conversationId, text, attachment, isCallLog } = req.body;
     const { role } = req.user;
 
     if (!conversationId) {
@@ -142,6 +142,10 @@ exports.sendMessage = async (req, res) => {
       senderId: req.user._id,
       senderRole: role,
     };
+
+    if (isCallLog) {
+      msgData.isCallLog = true;
+    }
 
     // Only set text if it's a non-empty string
     if (text && typeof text === 'string' && text.trim()) {

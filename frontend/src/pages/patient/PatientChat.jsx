@@ -33,6 +33,16 @@ const ChatPage = () => {
   const messagesEndRef = useRef(null);
   const typingTimerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const activeConvRef = useRef(activeConv);
+  const conversationsRef = useRef(conversations);
+
+  useEffect(() => {
+    activeConvRef.current = activeConv;
+  }, [activeConv]);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   // Init socket
   useEffect(() => {
@@ -41,9 +51,35 @@ const ChatPage = () => {
     const socket = initSocket(token);
     socketRef.current = socket;
 
-    socket.on('new-message', (msg) => {
-      setMessages(prev => [...prev, msg]);
-    });
+    const onNewMessage = (msg) => {
+      const isCurrentActive = activeConvRef.current?.conversationId === msg.conversationId;
+      
+      // 1. Add message if it belongs to current active chat
+      if (isCurrentActive) {
+        setMessages(prev => [...prev, msg]);
+        api.post(`/chat/mark-read/${msg.conversationId}`).catch(() => {});
+        socket.emit('message-read', { conversationId: msg.conversationId });
+      }
+
+      // 2. Update conversations list
+      setConversations(prev => {
+        const index = prev.findIndex(c => c.conversationId === msg.conversationId);
+        if (index > -1) {
+          const updated = [...prev];
+          updated[index] = {
+            ...updated[index],
+            lastMessage: msg,
+            unreadCount: isCurrentActive ? 0 : updated[index].unreadCount + 1
+          };
+          // Move to top
+          const [moved] = updated.splice(index, 1);
+          return [moved, ...updated];
+        }
+        return prev;
+      });
+    };
+
+    socket.on('new-message', onNewMessage);
 
     socket.on('typing', () => setIsTyping(true));
     socket.on('stop-typing', () => setIsTyping(false));
@@ -51,10 +87,9 @@ const ChatPage = () => {
       setMessages(prev => prev.map(m => ({ ...m, readAt: m.readAt || new Date() })));
     });
 
-    // Incoming call
     socket.on('call:incoming', ({ from, callerName, conversationId }) => {
       // Find the target user from conversations
-      const conv = conversations.find(c => c.conversationId === conversationId);
+      const conv = conversationsRef.current.find(c => c.conversationId === conversationId);
       setCallState({
         type: 'incoming',
         offer: null,
@@ -67,14 +102,14 @@ const ChatPage = () => {
     });
 
     return () => {
-      socket.off('new-message');
+      socket.off('new-message', onNewMessage);
       socket.off('typing');
       socket.off('stop-typing');
       socket.off('messages-read');
       socket.off('call:incoming');
       socket.off('call:offer');
     };
-  }, [conversations]);
+  }, []); // Run ONCE, we use refs inside listeners to prevent stale closures
 
   // Fetch conversations
   useEffect(() => {
@@ -130,7 +165,7 @@ const ChatPage = () => {
     }, 1500);
   };
 
-  const sendMessage = async (textOverride, attachment) => {
+  const sendMessage = async (textOverride, attachment, isCallLog = false) => {
     const text = textOverride ?? inputText.trim();
     if (!text && !attachment) return;
     if (!activeConv) return;
@@ -141,6 +176,7 @@ const ChatPage = () => {
       senderRole: user.role,
       text: text || null,
       attachment: attachment || null,
+      isCallLog,
       createdAt: new Date().toISOString(),
       _localId: `temp_${Date.now()}`,
     };
@@ -154,6 +190,7 @@ const ChatPage = () => {
       conversationId: activeConv.conversationId,
       text: text || null,
       attachment: attachment || null,
+      isCallLog,
     };
 
     try {
@@ -237,6 +274,7 @@ const ChatPage = () => {
           isIncoming={callState.type === 'incoming'}
           incomingOffer={callState.offer}
           onClose={() => setCallState(null)}
+          onCallLog={(text) => sendMessage(text, null, true)}
         />
       )}
 
@@ -361,6 +399,18 @@ const ChatPage = () => {
               )}
               {messages.map((msg, idx) => {
                 const mine = isMe(msg);
+                
+                if (msg.isCallLog) {
+                  return (
+                    <div key={msg._id || idx} className="flex justify-center my-3">
+                      <div className="px-4 py-1.5 bg-slate-200/60 rounded-full text-xs font-medium text-slate-600 flex items-center gap-2">
+                        <Phone size={12} className={msg.text.includes('Missed') ? 'text-rose-500' : 'text-slate-500'} />
+                        {msg.text}
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={msg._id || idx} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[75%] ${mine ? 'items-end' : 'items-start'} flex flex-col gap-1`}>

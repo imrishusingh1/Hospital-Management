@@ -11,6 +11,7 @@ const messageSchema = new mongoose.Schema({
     name: { type: String },
     size: { type: Number }
   },
+  isCallLog: { type: Boolean, default: false },
   readAt: { type: Date, default: null },
 }, { timestamps: true });
 

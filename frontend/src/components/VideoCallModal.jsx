@@ -8,22 +8,33 @@ const ICE_SERVERS = {
   ],
 };
 
-const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingOffer, onClose }) => {
+const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingOffer, onClose, onCallLog }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
+  const streamPromiseRef = useRef(null);
 
   const [callState, setCallState] = useState(isIncoming ? 'incoming' : 'calling');
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [hasConnected, setHasConnected] = useState(false);
+
+  useEffect(() => {
+    if (callState === 'connected') setHasConnected(true);
+  }, [callState]);
 
   const targetUserId = targetUser?.userId?.toString() || targetUser?.id?.toString();
 
   const cleanup = () => {
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(t => t.stop());
+      localStreamRef.current.getTracks().forEach(t => {
+        t.stop();
+      });
       localStreamRef.current = null;
+    }
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
     }
     if (pcRef.current) {
       pcRef.current.close();
@@ -31,15 +42,26 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
     }
   };
 
+  useEffect(() => {
+    return () => cleanup();
+  }, []);
+
   const startLocalStream = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      if (localStreamRef.current) return localStreamRef.current;
+      if (streamPromiseRef.current) return await streamPromiseRef.current;
+
+      streamPromiseRef.current = navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await streamPromiseRef.current;
+      
       localStreamRef.current = stream;
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
       return stream;
     } catch (err) {
       console.error('getUserMedia error:', err);
       return null;
+    } finally {
+      streamPromiseRef.current = null;
     }
   };
 
@@ -98,6 +120,17 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
 
   const endCall = () => {
     socket.emit('call:end', { targetUserId });
+    
+    // If the caller cancelled the call before it connected
+    if (!hasConnected && !isIncoming && onCallLog) {
+      onCallLog('Missed Video Call');
+    }
+    
+    // If it was a successful call that ended
+    if (hasConnected && onCallLog) {
+      onCallLog('Video Call Ended');
+    }
+
     cleanup();
     onClose();
   };
@@ -135,8 +168,20 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
       }
     };
 
-    const onCallEnd = () => { cleanup(); onClose(); };
-    const onCallRejected = () => { cleanup(); onClose(); };
+    const onCallEnd = () => { 
+      if (!hasConnected && isIncoming && onCallLog) {
+        onCallLog('Missed Video Call');
+      }
+      cleanup(); 
+      onClose(); 
+    };
+    const onCallRejected = () => { 
+      if (!isIncoming && onCallLog) {
+        onCallLog('Missed Video Call');
+      }
+      cleanup(); 
+      onClose(); 
+    };
 
     socket.on('call:answer', onAnswer);
     socket.on('call:ice-candidate', onIceCandidate);
