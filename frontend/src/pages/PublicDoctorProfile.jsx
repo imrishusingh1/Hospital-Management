@@ -48,7 +48,7 @@ export default function PublicDoctorProfile() {
             <ChevronRight size={14} />
             <span>Doctors</span>
             <ChevronRight size={14} />
-            <span className="text-white font-medium">Dr. {doctor.lastName}</span>
+            <span className="text-white font-medium">Dr. {doctor.firstName} {doctor.lastName}</span>
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function PublicDoctorProfile() {
 
             <h3 className="text-xl font-bold text-slate-900 mb-4 font-display">About the Doctor</h3>
             <p className="text-slate-600 leading-relaxed mb-8">
-              {doctor.bio || `Dr. ${doctor.lastName} is a highly qualified specialist dedicated to providing exceptional care and treatment. With extensive experience in ${doctor.specialization}, they focus on personalized patient care and the latest medical advancements.`}
+              {doctor.bio || `Dr. ${doctor.firstName} ${doctor.lastName} is a highly qualified specialist dedicated to providing exceptional care and treatment. With extensive experience in ${doctor.specialization}, they focus on personalized patient care and the latest medical advancements.`}
             </p>
 
             <h3 className="text-xl font-bold text-slate-900 mb-4 font-display">Specialties</h3>

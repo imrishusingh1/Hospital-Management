@@ -38,7 +38,7 @@ const Landing = () => {
             name: `Dr. ${doc.firstName} ${doc.lastName}`,
             firstName: doc.firstName,
             spec: doc.specialization,
-            rating: doc.rating || doc.averageRating || '4.9/5',
+            rating: (doc.averageRating && doc.averageRating > 0) ? doc.averageRating.toFixed(1) : 'New',
             img: resolveMediaUrl(doc.avatar) || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
             bio: doc.bio || 'Experienced and compassionate doctor committed to patient care.',
             experience: doc.experienceYears ? `${doc.experienceYears}+ Years` : '10+ Years',
@@ -315,13 +315,17 @@ const Landing = () => {
 
             {/* Card 2 */}
             <div className="bg-slate-200 rounded-[2rem] overflow-hidden shadow-lg relative group">
-              <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Doctor smiling" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <img 
+                src={heroDoctors.length > 0 ? heroDoctors[0].img : "https://images.unsplash.com/photo-1537368910025-700350fe46c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"} 
+                alt="Trusted Doctor" 
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+              />
             </div>
 
             {/* Card 3 */}
             <div className="bg-white rounded-[2rem] p-8 shadow-lg border border-gray-100 flex flex-col justify-between">
               <div>
-                <h3 className="text-5xl font-bold text-slate-900 mb-2">120+</h3>
+                <h3 className="text-5xl font-bold text-slate-900 mb-2">{heroDoctors.length > 0 ? heroDoctors.length : '0'}+</h3>
                 <p className="text-xl text-slate-700 font-medium">Trusted Doctors</p>
               </div>
 
@@ -379,7 +383,7 @@ const Landing = () => {
           <div className="grid md:grid-cols-3 gap-6">
             
             {services.length > 0 ? (
-              services.slice(0, 3).map((service, idx) => {
+              services.map((service, idx) => {
                 const IconComponent = Icons[service.iconName] || Icons.Asterisk;
                 const colors = [
                   { bg: 'bg-[#107c9f]', text: 'text-[#107c9f]' },
@@ -555,7 +559,7 @@ const Landing = () => {
 
               {/* Right Details Side */}
               <div className="p-8 lg:p-12 flex flex-col">
-                <h3 className="text-3xl font-bold text-slate-900 mb-4">About Dr. {heroDoctors[specDocIndex].firstName || heroDoctors[specDocIndex].name.split(' ').pop()}:</h3>
+                <h3 className="text-3xl font-bold text-slate-900 mb-4">About {heroDoctors[specDocIndex].name}:</h3>
                 <p className="text-slate-500 text-lg mb-12 max-w-xl line-clamp-3">{heroDoctors[specDocIndex].bio}</p>
                 
                 <div className="grid grid-cols-2 gap-8 mb-auto">
@@ -631,31 +635,29 @@ const Landing = () => {
             {/* Card 1 */}
             <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col h-[500px]">
               <div className="h-[55%] bg-gradient-to-br from-[#073c52] to-[#107c9f] p-8 relative overflow-hidden flex flex-col justify-center space-y-3">
-                 {/* Stacked Pills mock */}
-                 <div className="bg-white/10 backdrop-blur-md rounded-full p-2 pr-4 flex items-center shadow-lg border border-white/10 w-[90%] transform -translate-x-4">
-                    <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" className="w-8 h-8 rounded-full" alt="avatar"/>
-                    <div className="ml-3 flex-1 text-white">
-                      <p className="text-xs font-bold">Dr. James Carter</p>
-                      <p className="text-[10px] text-white/70">Cardiologist</p>
-                    </div>
-                    <button onClick={() => toast.success("View Profile")} className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-[#107c9f] hover:bg-gray-100 transition-colors"><Camera size={12} /></button>
-                 </div>
-                 <div className="bg-white/20 backdrop-blur-md rounded-full p-2 pr-4 flex items-center shadow-lg border border-white/20 w-full transform translate-x-2 relative z-10">
-                    <img src="https://images.unsplash.com/photo-1594824436951-7f12678cecea?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" className="w-8 h-8 rounded-full" alt="avatar"/>
-                    <div className="ml-3 flex-1 text-white">
-                      <p className="text-xs font-bold">Dr. Sarah Mitchell</p>
-                      <p className="text-[10px] text-white/70">Dermatologist</p>
-                    </div>
-                    <button onClick={() => toast.success("View Profile")} className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-[#107c9f] hover:bg-gray-100 transition-colors"><Camera size={12} /></button>
-                 </div>
-                 <div className="bg-white/10 backdrop-blur-md rounded-full p-2 pr-4 flex items-center shadow-lg border border-white/10 w-[90%] transform -translate-x-2">
-                    <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" className="w-8 h-8 rounded-full" alt="avatar"/>
-                    <div className="ml-3 flex-1 text-white">
-                      <p className="text-xs font-bold">Dr. Robert Elisson</p>
-                      <p className="text-[10px] text-white/70">General Physician</p>
-                    </div>
-                    <button onClick={() => toast.success("View Profile")} className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-[#107c9f] hover:bg-gray-100 transition-colors"><Camera size={12} /></button>
-                 </div>
+                 {heroDoctors.length > 0 ? (
+                   [...heroDoctors].sort(() => 0.5 - Math.random()).slice(0, 3).map((doc, idx) => {
+                     const styles = [
+                       "bg-white/10 backdrop-blur-md rounded-full p-2 pr-4 flex items-center shadow-lg border border-white/10 w-[90%] transform -translate-x-4",
+                       "bg-white/20 backdrop-blur-md rounded-full p-2 pr-4 flex items-center shadow-lg border border-white/20 w-full transform translate-x-2 relative z-10",
+                       "bg-white/10 backdrop-blur-md rounded-full p-2 pr-4 flex items-center shadow-lg border border-white/10 w-[90%] transform -translate-x-2"
+                     ];
+                     return (
+                       <div key={doc.id || idx} className={styles[idx % 3]}>
+                          <img src={doc.img} className="w-8 h-8 rounded-full object-cover shrink-0" alt="avatar"/>
+                          <div className="ml-3 flex-1 text-white overflow-hidden">
+                            <p className="text-xs font-bold truncate w-full">{doc.name}</p>
+                            <p className="text-[10px] text-white/70 truncate w-full">{doc.spec}</p>
+                          </div>
+                          <Link to={`/doctor-profile/${doc.id}`} className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-[#107c9f] hover:bg-gray-100 transition-colors shrink-0">
+                            <ChevronRight size={12} />
+                          </Link>
+                       </div>
+                     );
+                   })
+                 ) : (
+                   <div className="text-white/50 text-sm text-center py-8 font-medium">Loading experts...</div>
+                 )}
               </div>
               <div className="p-8 flex-1 flex flex-col justify-center">
                 <h3 className="text-2xl font-bold text-slate-900 mb-4">Expert Doctors</h3>
@@ -749,7 +751,7 @@ const Landing = () => {
                   <div className="flex items-center pt-4 border-t border-white/20">
                       <div className="flex flex-col">
                         <h4 className="font-bold text-white text-lg">{review.patientId?.firstName} {review.patientId?.lastName}</h4>
-                        <p className="text-xs text-[#1cb1d6] font-semibold tracking-wide uppercase mt-1">Treated by Dr. {review.doctorId?.lastName || review.doctorId?.firstName}</p>
+                        <p className="text-xs text-[#1cb1d6] font-semibold tracking-wide uppercase mt-1">Treated by Dr. {review.doctorId?.firstName} {review.doctorId?.lastName}</p>
                       </div>
                   </div>
                 </div>
@@ -840,10 +842,20 @@ const Landing = () => {
       <section className="relative pt-32 pb-8 bg-gradient-to-br from-[#1db1d7] via-[#107c9f] to-[#073c52] text-white overflow-hidden">
         
         {/* Floating Avatars */}
-        <img src="https://images.unsplash.com/photo-1594824436951-7f12678cecea?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80" className="absolute top-20 left-[20%] w-20 h-20 rounded-full border-4 border-white/20 object-cover shadow-lg" alt="Doctor" />
-        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80" className="absolute top-20 right-[25%] w-16 h-16 rounded-full border-4 border-white/20 object-cover shadow-lg" alt="Doctor" />
-        <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80" className="absolute bottom-[40%] left-[25%] w-16 h-16 rounded-full border-4 border-white/20 object-cover shadow-lg" alt="Doctor" />
-        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80" className="absolute bottom-[45%] right-[20%] w-20 h-20 rounded-full border-4 border-white/20 object-cover shadow-lg" alt="Doctor" />
+        {heroDoctors.length > 0 && (() => {
+          const shuffled = [...heroDoctors].sort(() => 0.5 - Math.random()).slice(0, 4);
+          const positions = [
+            "absolute top-20 left-[20%] w-20 h-20 rounded-full border-4 border-white/20 object-cover shadow-lg hidden md:block hover:scale-110 transition-transform cursor-pointer",
+            "absolute top-20 right-[25%] w-16 h-16 rounded-full border-4 border-white/20 object-cover shadow-lg hidden md:block hover:scale-110 transition-transform cursor-pointer",
+            "absolute bottom-[40%] left-[25%] w-16 h-16 rounded-full border-4 border-white/20 object-cover shadow-lg hidden md:block hover:scale-110 transition-transform cursor-pointer",
+            "absolute bottom-[45%] right-[20%] w-20 h-20 rounded-full border-4 border-white/20 object-cover shadow-lg hidden md:block hover:scale-110 transition-transform cursor-pointer"
+          ];
+          return shuffled.map((doc, idx) => (
+            <Link key={doc.id || idx} to={`/doctor-profile/${doc.id}`}>
+              <img src={doc.img} className={positions[idx]} alt="Doctor" />
+            </Link>
+          ));
+        })()}
 
         <div className="max-w-[1000px] mx-auto px-8 text-center relative z-10 mb-32">
           <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 mb-8">
