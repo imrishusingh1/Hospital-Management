@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { PhoneOff, Mic, MicOff, Video, VideoOff, Phone } from 'lucide-react';
+import useRingtone from '../hooks/useRingtone';
 
 // ICE servers with both STUN and free TURN (OpenRelay) for production NAT traversal
 const ICE_SERVERS = {
@@ -40,14 +41,19 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
   const [hasConnected, setHasConnected] = useState(false);
   const [callDuration, setCallDuration] = useState(0); // seconds
   const timerRef = useRef(null);
+  const { playRing, stopRing } = useRingtone();
 
   useEffect(() => {
     if (callState === 'connected') {
       setHasConnected(true);
       setCallDuration(0);
+      stopRing(); // stop ringing the moment call connects
       timerRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
+    }
+    if (callState === 'ringing' || callState === 'incoming') {
+      playRing(); // start ring for both caller and callee
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -65,6 +71,7 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
   const targetUserId = targetUser?.userId?.toString() || targetUser?.id?.toString();
 
   const cleanup = useCallback(() => {
+    stopRing(); // always stop ring on cleanup
     if (timerRef.current) clearInterval(timerRef.current);
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => t.stop());
