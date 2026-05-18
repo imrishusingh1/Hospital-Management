@@ -88,9 +88,7 @@ const ChatPage = () => {
     });
 
     socket.on('call:incoming', ({ from, callerName, conversationId }) => {
-      // Find the target user from conversations list
       const conv = conversationsRef.current.find(c => c.conversationId === conversationId);
-      // Always ensure userId is set so VideoCallModal can route the answer back
       const targetUser = conv?.participant
         ? { ...conv.participant, userId: conv.participant.userId || from }
         : { name: callerName, userId: from, id: from };
@@ -98,6 +96,7 @@ const ChatPage = () => {
         type: 'incoming',
         offer: null,
         targetUser,
+        targetUserId: from,  // always use `from` — the caller's socket userId
       });
     });
 
@@ -234,13 +233,15 @@ const ChatPage = () => {
 
   const startVideoCall = () => {
     if (!activeConv) return;
-    const targetUserId = activeConv.participant.userId?.toString();
+    const tUserId = activeConv.participant.userId?.toString()
+      || activeConv.participant._id?.toString()
+      || activeConv.participant.id?.toString();
     socketRef.current?.emit('call:initiate', {
-      targetUserId,
+      targetUserId: tUserId,
       callerName: profile ? `${profile.firstName} ${profile.lastName}` : user.email,
       conversationId: activeConv.conversationId,
     });
-    setCallState({ type: 'outgoing', targetUser: activeConv.participant });
+    setCallState({ type: 'outgoing', targetUser: activeConv.participant, targetUserId: tUserId });
   };
 
   const filteredConvs = conversations.filter(c =>
@@ -275,6 +276,7 @@ const ChatPage = () => {
           socket={socketRef.current}
           currentUser={user}
           targetUser={callState.targetUser}
+          targetUserId={callState.targetUserId}
           isIncoming={callState.type === 'incoming'}
           incomingOffer={callState.offer}
           onClose={() => setCallState(null)}

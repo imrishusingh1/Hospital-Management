@@ -58,7 +58,7 @@ function createRingtone() {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingOffer, onClose, onCallLog }) => {
+const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTargetUserId, isIncoming, incomingOffer, onClose, onCallLog }) => {
   const localVideoRef   = useRef(null);
   const remoteVideoRef  = useRef(null);
   const pcRef           = useRef(null);
@@ -75,7 +75,12 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
   const [hasConnected, setHasConnected] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
 
-  const targetUserId = targetUser?.userId?.toString() || targetUser?.id?.toString();
+  // propTargetUserId is the explicit, pre-resolved ID from PatientChat (most reliable)
+  // Fall back to deriving from targetUser only if not provided
+  const targetUserId = propTargetUserId
+    || targetUser?.userId?.toString()
+    || targetUser?.id?.toString()
+    || targetUser?._id?.toString();
 
   // Keep incomingOffer in a ref so acceptCall always reads the LATEST value
   // even if it arrives after the modal is mounted (race condition in PatientChat)
