@@ -43,22 +43,29 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
   const timerRef = useRef(null);
   const { playRing, stopRing } = useRingtone();
 
+  // Effect 1: Call duration timer — ONLY manages the timer, nothing else
   useEffect(() => {
     if (callState === 'connected') {
       setHasConnected(true);
       setCallDuration(0);
-      stopRing(); // stop ringing the moment call connects
       timerRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
-    }
-    if (callState === 'ringing' || callState === 'incoming') {
-      playRing(); // start ring for both caller and callee
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [callState]);
+
+  // Effect 2: Ringtone — completely isolated, never touches WebRTC state
+  useEffect(() => {
+    if (callState === 'ringing' || callState === 'incoming') {
+      playRing();
+    } else {
+      stopRing();
+    }
+    return () => stopRing(); // always stop ring when state changes or component unmounts
+  }, [callState]); // eslint-disable-line
 
   const formatDuration = (seconds) => {
     const h = Math.floor(seconds / 3600);
@@ -71,7 +78,6 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
   const targetUserId = targetUser?.userId?.toString() || targetUser?.id?.toString();
 
   const cleanup = useCallback(() => {
-    stopRing(); // always stop ring on cleanup
     if (timerRef.current) clearInterval(timerRef.current);
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => t.stop());
