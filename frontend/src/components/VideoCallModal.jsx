@@ -77,6 +77,13 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
 
   const targetUserId = targetUser?.userId?.toString() || targetUser?.id?.toString();
 
+  // Keep incomingOffer in a ref so acceptCall always reads the LATEST value
+  // even if it arrives after the modal is mounted (race condition in PatientChat)
+  const incomingOfferRef = useRef(incomingOffer);
+  useEffect(() => {
+    if (incomingOffer) incomingOfferRef.current = incomingOffer;
+  }, [incomingOffer]);
+
   // ── Ringtone helpers (imperative, no useEffect) ──────────────────────────
   const startRing = () => {
     if (stopRingtoneRef.current) return; // already ringing
@@ -201,18 +208,35 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
   };
 
   const acceptCall = async () => {
-    stopRing();                   // stop ring immediately on accept
+    stopRing();
+
+    // Wait up to 5 seconds for the offer to arrive if it hasn't yet
+    if (!incomingOfferRef.current) {
+      console.log('[WebRTC] Waiting for offer...');
+      await new Promise((resolve) => {
+        const check = setInterval(() => {
+          if (incomingOfferRef.current) {
+            clearInterval(check);
+            resolve();
+          }
+        }, 100);
+        setTimeout(() => { clearInterval(check); resolve(); }, 5000);
+      });
+    }
+
     setCallState('connected');
     setHasConnected(true);
     startTimer();
     const stream = await startLocalStream();
     if (!stream) return;
     const pc = createPeerConnection(stream);
-    if (incomingOffer) {
-      await setRemoteDescriptionAndFlush(pc, incomingOffer);
+    if (incomingOfferRef.current) {
+      await setRemoteDescriptionAndFlush(pc, incomingOfferRef.current);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socket.emit('call:answer', { targetUserId, answer });
+    } else {
+      console.error('[WebRTC] No offer received — cannot complete handshake');
     }
   };
 
