@@ -38,14 +38,34 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [hasConnected, setHasConnected] = useState(false);
+  const [callDuration, setCallDuration] = useState(0); // seconds
+  const timerRef = useRef(null);
 
   useEffect(() => {
-    if (callState === 'connected') setHasConnected(true);
+    if (callState === 'connected') {
+      setHasConnected(true);
+      setCallDuration(0);
+      timerRef.current = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, [callState]);
+
+  const formatDuration = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
 
   const targetUserId = targetUser?.userId?.toString() || targetUser?.id?.toString();
 
   const cleanup = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => t.stop());
       localStreamRef.current = null;
@@ -170,7 +190,7 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
   const endCall = () => {
     socket.emit('call:end', { targetUserId });
     if (!hasConnected && !isIncoming && onCallLog) onCallLog('Missed Video Call');
-    if (hasConnected && onCallLog) onCallLog('Video Call Ended');
+    if (hasConnected && onCallLog) onCallLog(`Video Call Ended • ${formatDuration(callDuration)}`);
     cleanup();
     onClose();
   };
@@ -279,9 +299,12 @@ const VideoCallModal = ({ socket, currentUser, targetUser, isIncoming, incomingO
         </p>
         <h2 className="text-2xl font-bold">{targetUser?.name || 'Unknown'}</h2>
         {callState === 'connected' && (
-          <p className="text-sm text-emerald-400 mt-1 flex items-center gap-1">
+          <p className="text-sm text-emerald-400 mt-1 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" />
             Live
+            <span className="font-mono text-white/80 bg-white/10 px-2 py-0.5 rounded-full text-xs tracking-widest">
+              {formatDuration(callDuration)}
+            </span>
           </p>
         )}
       </div>
