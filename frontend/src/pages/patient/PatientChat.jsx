@@ -88,12 +88,16 @@ const ChatPage = () => {
     });
 
     socket.on('call:incoming', ({ from, callerName, conversationId }) => {
-      // Find the target user from conversations
+      // Find the target user from conversations list
       const conv = conversationsRef.current.find(c => c.conversationId === conversationId);
+      // Always ensure userId is set so VideoCallModal can route the answer back
+      const targetUser = conv?.participant
+        ? { ...conv.participant, userId: conv.participant.userId || from }
+        : { name: callerName, userId: from, id: from };
       setCallState({
         type: 'incoming',
         offer: null,
-        targetUser: conv?.participant || { name: callerName, userId: from },
+        targetUser,
       });
     });
 
