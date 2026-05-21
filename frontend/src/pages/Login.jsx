@@ -33,6 +33,17 @@ const Login = () => {
       if (isLogin) {
         // Login Flow
         const data = await login(email, password);
+
+        // ── RBAC: Ensure the selected role matches the actual account role ──
+        if (data.user.role !== role) {
+          // Immediately invalidate the token so the session is not kept
+          localStorage.removeItem('token');
+          toast.error(
+            `This account is registered as a ${data.user.role}. Please select the correct portal to sign in.`
+          );
+          return;
+        }
+
         toast.success(`Welcome back, ${data.user.role}!`);
         if (data.user.role === 'Admin') navigate('/admin');
         else if (data.user.role === 'Doctor') navigate('/doctor');
