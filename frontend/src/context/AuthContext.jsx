@@ -56,8 +56,15 @@ export const AuthProvider = ({ children }) => {
     window.location.href = '/login';
   };
 
+  // Like logout but without redirecting — used when we are already on /login
+  const resetAuth = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    setProfile(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, login, register, logout, hydrateMe }}>
+    <AuthContext.Provider value={{ user, profile, loading, login, register, logout, resetAuth, hydrateMe }}>
       {children}
     </AuthContext.Provider>
   );

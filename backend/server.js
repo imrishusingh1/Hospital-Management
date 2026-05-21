@@ -133,12 +133,23 @@ app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rate Limiting
+// General API limiter — generous enough for real-time healthcare use
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'development' ? 5000 : 100,
+  max: process.env.NODE_ENV === 'development' ? 10000 : 500,
   message: 'Too many requests from this IP, please try again after 15 minutes',
+  skip: (req) => req.path.startsWith('/socket.io'), // never rate-limit WS upgrade
 });
 app.use('/api', limiter);
+
+// Stricter limiter for auth endpoints only (brute-force protection)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'development' ? 1000 : 50,
+  message: 'Too many login attempts, please try again after 15 minutes',
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));

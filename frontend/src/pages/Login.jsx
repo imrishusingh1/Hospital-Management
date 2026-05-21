@@ -24,7 +24,7 @@ const Login = () => {
   const [experienceYears, setExperienceYears] = useState('');
   const [consultationFee, setConsultationFee] = useState('');
 
-  const { login, register } = useContext(AuthContext);
+  const { login, register, resetAuth } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -36,8 +36,9 @@ const Login = () => {
 
         // ── RBAC: Ensure the selected role matches the actual account role ──
         if (data.user.role !== role) {
-          // Immediately invalidate the token so the session is not kept
-          localStorage.removeItem('token');
+          // Clear the token + React state without triggering a page redirect
+          // (a redirect from /login would cause a reload loop → 429 errors)
+          resetAuth();
           toast.error(
             `This account is registered as a ${data.user.role}. Please select the correct portal to sign in.`
           );

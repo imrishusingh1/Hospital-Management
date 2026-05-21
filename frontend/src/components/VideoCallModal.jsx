@@ -68,6 +68,7 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
   const remoteDescSet   = useRef(false);
   const stopRingtoneRef = useRef(null);   // holds the stop() fn while ringing
   const timerRef        = useRef(null);   // call duration interval
+  const hasInitiatedRef = useRef(false);  // guard: initiateCall fires only once
 
   const [callState,    setCallState]    = useState(isIncoming ? 'incoming' : 'calling');
   const [isMuted,      setIsMuted]      = useState(false);
@@ -193,8 +194,15 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
 
     pc.ontrack = (e) => {
       console.log('[WebRTC] ontrack fired', e.streams);
-      if (remoteVideoRef.current && e.streams?.[0]) {
-        remoteVideoRef.current.srcObject = e.streams[0];
+      const stream = e.streams?.[0];
+      if (remoteVideoRef.current && stream) {
+        if (remoteVideoRef.current.srcObject !== stream) {
+          remoteVideoRef.current.srcObject = stream;
+        }
+        // Force play to bypass browser autoplay restrictions
+        remoteVideoRef.current.play().catch((err) => {
+          console.warn('[WebRTC] remoteVideo.play() blocked:', err);
+        });
       }
     };
 
@@ -310,7 +318,10 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
     socket.on('call:end',           onCallEnd);
     socket.on('call:rejected',      onCallRejected);
 
-    if (!isIncoming) initiateCall();
+    if (!isIncoming && !hasInitiatedRef.current) {
+      hasInitiatedRef.current = true;
+      initiateCall();
+    }
 
     return () => {
       socket.off('call:answer',        onAnswer);

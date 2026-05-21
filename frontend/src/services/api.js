@@ -24,10 +24,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Handle unauthorized access (e.g., clear token, redirect to login)
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only redirect if we are NOT already on the login page.
+      // Redirecting from /login causes an infinite reload loop that
+      // hammers the server and triggers rate-limit (429) errors.
+      const alreadyOnLogin = window.location.pathname === '/login';
+      if (!alreadyOnLogin) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
