@@ -35,6 +35,9 @@ const ChatPage = () => {
   const fileInputRef = useRef(null);
   const activeConvRef = useRef(activeConv);
   const conversationsRef = useRef(conversations);
+  // Buffer the SDP offer so it is never lost even if call:offer arrives
+  // before the VideoCallModal has mounted and registered its own listener.
+  const pendingOfferRef = useRef(null);
 
   useEffect(() => {
     activeConvRef.current = activeConv;
@@ -94,13 +97,18 @@ const ChatPage = () => {
         : { name: callerName, userId: from, id: from };
       setCallState({
         type: 'incoming',
-        offer: null,
+        // Use the already-buffered offer (if call:offer arrived first), else null
+        offer: pendingOfferRef.current || null,
         targetUser,
-        targetUserId: from,  // always use `from` — the caller's socket userId
+        targetUserId: from,
       });
+      pendingOfferRef.current = null; // consumed
     });
 
     socket.on('call:offer', ({ from, offer }) => {
+      // Buffer the offer. If the modal is already open, pass it in via state.
+      // If the modal isn't open yet, store it so call:incoming can pick it up.
+      pendingOfferRef.current = offer;
       setCallState(prev => prev ? { ...prev, offer } : null);
     });
 

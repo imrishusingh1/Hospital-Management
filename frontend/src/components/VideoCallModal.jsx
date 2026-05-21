@@ -6,14 +6,14 @@ const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'turn:openrelay.metered.ca:80',        username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443',       username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'turn:openrelay.metered.ca:80',              username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443',             username: 'openrelayproject', credential: 'openrelayproject' },
     { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
   ],
 };
 
-// ─── Ringtone (plain JS, zero React involvement) ──────────────────────────────
-// Returns a stop() function. Synthesizes a 3-note ascending messenger ring.
+// ─── Ringtone ─────────────────────────────────────────────────────────────────
 function createRingtone() {
   let stopped = false;
   let intervalId = null;
@@ -41,7 +41,6 @@ function createRingtone() {
         osc.start(ctx.currentTime + start);
         osc.stop(ctx.currentTime  + start + dur);
       });
-      // Close context after cycle completes to free memory
       setTimeout(() => { try { ctx.close(); } catch (_) {} }, 1500);
     } catch (e) {
       console.warn('[Ringtone]', e);
@@ -58,17 +57,26 @@ function createRingtone() {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTargetUserId, isIncoming, incomingOffer, onClose, onCallLog }) => {
-  const localVideoRef   = useRef(null);
-  const remoteVideoRef  = useRef(null);
-  const pcRef           = useRef(null);
-  const localStreamRef  = useRef(null);
+const VideoCallModal = ({
+  socket,
+  currentUser,
+  targetUser,
+  targetUserId: propTargetUserId,
+  isIncoming,
+  incomingOffer,
+  onClose,
+  onCallLog,
+}) => {
+  const localVideoRef    = useRef(null);
+  const remoteVideoRef   = useRef(null);
+  const pcRef            = useRef(null);
+  const localStreamRef   = useRef(null);
   const streamPromiseRef = useRef(null);
   const iceCandidateQueue = useRef([]);
-  const remoteDescSet   = useRef(false);
-  const stopRingtoneRef = useRef(null);   // holds the stop() fn while ringing
-  const timerRef        = useRef(null);   // call duration interval
-  const hasInitiatedRef = useRef(false);  // guard: initiateCall fires only once
+  const remoteDescSet    = useRef(false);
+  const stopRingtoneRef  = useRef(null);
+  const timerRef         = useRef(null);
+  const hasInitiatedRef  = useRef(false); // prevent double-call
 
   const [callState,    setCallState]    = useState(isIncoming ? 'incoming' : 'calling');
   const [isMuted,      setIsMuted]      = useState(false);
@@ -76,26 +84,43 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
   const [hasConnected, setHasConnected] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
 
-  // propTargetUserId is the explicit, pre-resolved ID from PatientChat (most reliable)
-  // Fall back to deriving from targetUser only if not provided
+  // ── KEY FIX: remote stream as React state ───────────────────────────────
+  // Storing the MediaStream in state ensures the useEffect below runs AFTER
+  // React has committed the video element to the DOM, eliminating all
+  // race conditions between ontrack callbacks and ref availability.
+  const [remoteStream, setRemoteStream] = useState(null);
+
+  // Whenever remoteStream state changes, wire it to the video element.
+  // This useEffect runs after React commits, so the DOM node is guaranteed ready.
+  useEffect(() => {
+    const videoEl = remoteVideoRef.current;
+    if (!videoEl || !remoteStream) return;
+
+    console.log('[WebRTC] Attaching remote stream to video element', remoteStream.id);
+    videoEl.srcObject = remoteStream;
+
+    // Some browsers (especially mobile) need an explicit play() call
+    videoEl.play().catch((err) => {
+      console.warn('[WebRTC] remoteVideo.play() was blocked:', err.name, err.message);
+    });
+  }, [remoteStream]);
+
   const targetUserId = propTargetUserId
     || targetUser?.userId?.toString()
     || targetUser?.id?.toString()
     || targetUser?._id?.toString();
 
-  // Keep incomingOffer in a ref so acceptCall always reads the LATEST value
-  // even if it arrives after the modal is mounted (race condition in PatientChat)
+  // Keep incomingOffer in a ref so acceptCall always reads the latest value
   const incomingOfferRef = useRef(incomingOffer);
   useEffect(() => {
     if (incomingOffer) incomingOfferRef.current = incomingOffer;
   }, [incomingOffer]);
 
-  // ── Ringtone helpers (imperative, no useEffect) ──────────────────────────
+  // ── Ringtone ─────────────────────────────────────────────────────────────
   const startRing = () => {
-    if (stopRingtoneRef.current) return; // already ringing
+    if (stopRingtoneRef.current) return;
     stopRingtoneRef.current = createRingtone();
   };
-
   const stopRing = () => {
     if (stopRingtoneRef.current) {
       stopRingtoneRef.current();
@@ -103,26 +128,25 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
     }
   };
 
-  // ── Timer helpers ────────────────────────────────────────────────────────
+  // ── Timer ─────────────────────────────────────────────────────────────────
   const startTimer = () => {
     setCallDuration(0);
     timerRef.current = setInterval(() => setCallDuration(prev => prev + 1), 1000);
   };
-
   const stopTimer = () => {
     clearInterval(timerRef.current);
     timerRef.current = null;
   };
 
   const formatDuration = (s) => {
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
+    const h   = Math.floor(s / 3600);
+    const m   = Math.floor((s % 3600) / 60);
     const sec = s % 60;
     if (h > 0) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
     return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
   };
 
-  // ── Cleanup (called on end / unmount) ────────────────────────────────────
+  // ── Cleanup ───────────────────────────────────────────────────────────────
   const cleanup = useCallback(() => {
     stopRing();
     stopTimer();
@@ -132,6 +156,7 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
     }
     if (localVideoRef.current)  localVideoRef.current.srcObject  = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+    setRemoteStream(null); // clear state too
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
@@ -140,15 +165,14 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
     remoteDescSet.current = false;
   }, []); // eslint-disable-line
 
-  // Unmount cleanup
   useEffect(() => () => cleanup(), [cleanup]);
 
-  // ── Start ringing immediately when modal opens ───────────────────────────
+  // Ring on open
   useEffect(() => {
-    startRing(); // ring for both caller ("calling") and callee ("incoming")
+    startRing();
   }, []); // eslint-disable-line
 
-  // ── Media helpers ────────────────────────────────────────────────────────
+  // ── Media helpers ─────────────────────────────────────────────────────────
   const startLocalStream = async () => {
     try {
       if (localStreamRef.current) return localStreamRef.current;
@@ -175,33 +199,58 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
     iceCandidateQueue.current = [];
   };
 
-  const createPeerConnection = (stream) => {
+  const createPeerConnection = (localStream) => {
     const pc = new RTCPeerConnection(ICE_SERVERS);
     pcRef.current = pc;
     remoteDescSet.current = false;
     iceCandidateQueue.current = [];
 
-    stream.getTracks().forEach(track => pc.addTrack(track, stream));
+    // Add local tracks
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
+    // ICE candidates
     pc.onicecandidate = (e) => {
       if (e.candidate) socket.emit('call:ice-candidate', { targetUserId, candidate: e.candidate });
     };
 
     pc.oniceconnectionstatechange = () => {
-      console.log('[WebRTC] ICE:', pc.iceConnectionState);
-      if (pc.iceConnectionState === 'failed') pc.restartIce();
+      console.log('[WebRTC] ICE state:', pc.iceConnectionState);
+      if (pc.iceConnectionState === 'failed') {
+        console.warn('[WebRTC] ICE failed, restarting...');
+        pc.restartIce();
+      }
     };
 
+    pc.onconnectionstatechange = () => {
+      console.log('[WebRTC] Connection state:', pc.connectionState);
+    };
+
+    // ── THE FIX ────────────────────────────────────────────────────────────
+    // Store the remote MediaStream in React state instead of imperatively
+    // touching the DOM ref. The useEffect at the top of this component will
+    // safely attach it to the <video> element after React commits the render.
+    //
+    // ontrack fires once per track (audio then video). Both events share the
+    // same MediaStream object via e.streams[0]. We call setRemoteStream on
+    // every track event so that the video track arrival also triggers the
+    // useEffect, ensuring the video element picks it up.
     pc.ontrack = (e) => {
-      console.log('[WebRTC] ontrack fired', e.streams);
-      const stream = e.streams?.[0];
-      if (remoteVideoRef.current && stream) {
-        if (remoteVideoRef.current.srcObject !== stream) {
-          remoteVideoRef.current.srcObject = stream;
-        }
-        // Force play to bypass browser autoplay restrictions
-        remoteVideoRef.current.play().catch((err) => {
-          console.warn('[WebRTC] remoteVideo.play() blocked:', err);
+      console.log('[WebRTC] ontrack fired — kind:', e.track.kind, 'streams:', e.streams.length);
+      const incoming = e.streams?.[0];
+      if (incoming) {
+        // Always update state so the useEffect re-fires and re-attaches srcObject.
+        // Using the functional form avoids stale closure issues.
+        setRemoteStream(incoming);
+      } else {
+        // Fallback: build a stream manually from the track if no stream bundle
+        console.warn('[WebRTC] ontrack: no stream in event, building manually');
+        setRemoteStream(prev => {
+          if (prev) {
+            prev.addTrack(e.track);
+            return prev; // mutate and return same ref to preserve identity
+          }
+          const ms = new MediaStream([e.track]);
+          return ms;
         });
       }
     };
@@ -209,7 +258,7 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
     return pc;
   };
 
-  // ── Call actions ─────────────────────────────────────────────────────────
+  // ── Call actions ──────────────────────────────────────────────────────────
   const initiateCall = async () => {
     const stream = await startLocalStream();
     if (!stream) return;
@@ -223,15 +272,12 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
   const acceptCall = async () => {
     stopRing();
 
-    // Wait up to 5 seconds for the offer to arrive if it hasn't yet
+    // Wait up to 5 s for the offer if it hasn't arrived yet
     if (!incomingOfferRef.current) {
       console.log('[WebRTC] Waiting for offer...');
       await new Promise((resolve) => {
         const check = setInterval(() => {
-          if (incomingOfferRef.current) {
-            clearInterval(check);
-            resolve();
-          }
+          if (incomingOfferRef.current) { clearInterval(check); resolve(); }
         }, 100);
         setTimeout(() => { clearInterval(check); resolve(); }, 5000);
       });
@@ -240,9 +286,12 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
     setCallState('connected');
     setHasConnected(true);
     startTimer();
+
     const stream = await startLocalStream();
     if (!stream) return;
+
     const pc = createPeerConnection(stream);
+
     if (incomingOfferRef.current) {
       await setRemoteDescriptionAndFlush(pc, incomingOfferRef.current);
       const answer = await pc.createAnswer();
@@ -277,13 +326,13 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
     setIsVideoOff(prev => !prev);
   };
 
-  // ── Socket listeners ─────────────────────────────────────────────────────
+  // ── Socket listeners ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!socket) return;
 
     const onAnswer = async ({ answer }) => {
-      console.log('[WebRTC] Got answer');
-      stopRing();                // stop ring as soon as callee picks up
+      console.log('[WebRTC] Got answer from callee');
+      stopRing();
       if (pcRef.current) {
         await setRemoteDescriptionAndFlush(pcRef.current, answer);
         setCallState('connected');
@@ -318,6 +367,7 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
     socket.on('call:end',           onCallEnd);
     socket.on('call:rejected',      onCallRejected);
 
+    // Initiate only once, even if socket ref changes
     if (!isIncoming && !hasInitiatedRef.current) {
       hasInitiatedRef.current = true;
       initiateCall();
@@ -334,11 +384,17 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
   // ─── UI ───────────────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center">
-      {/* Remote Video (full screen) */}
-      <video ref={remoteVideoRef} autoPlay playsInline
-        className="absolute inset-0 w-full h-full object-cover" />
 
-      {/* Overlay */}
+      {/* Remote Video — always in DOM, srcObject is managed by useEffect above */}
+      <video
+        ref={remoteVideoRef}
+        autoPlay
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ background: 'black' }}
+      />
+
+      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
 
       {/* Local Video PiP */}
@@ -354,8 +410,8 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
       {/* Header */}
       <div className="absolute top-6 left-6 z-10 text-white">
         <p className="text-xs uppercase tracking-widest text-white/60 mb-1">
-          {callState === 'incoming'  ? 'Incoming Call'
-           : callState === 'ringing' ? 'Calling...'
+          {callState === 'incoming'   ? 'Incoming Call'
+           : callState === 'ringing'  ? 'Calling...'
            : callState === 'connected' ? 'Connected' : ''}
         </p>
         <h2 className="text-2xl font-bold">{targetUser?.name || 'Unknown'}</h2>
@@ -401,7 +457,7 @@ const VideoCallModal = ({ socket, currentUser, targetUser, targetUserId: propTar
         )}
       </div>
 
-      {/* Waiting animation */}
+      {/* Waiting animation (only while not yet connected) */}
       {(callState === 'calling' || callState === 'ringing') && (
         <div className="relative z-10 flex flex-col items-center">
           <div className="relative mb-8">
