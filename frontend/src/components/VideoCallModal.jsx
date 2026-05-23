@@ -178,7 +178,8 @@ const VideoCallModal = ({
     const pc = new RTCPeerConnection(iceConfig);
     pcRef.current = pc;
     remoteDescSet.current = false;
-    iceCandidateQueue.current = [];
+    // DO NOT CLEAR iceCandidateQueue HERE! It might already contain buffered candidates
+    // from the socket listener while the call was ringing!
 
     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
