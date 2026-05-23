@@ -427,7 +427,7 @@ const VideoCallModal = ({
         ref={remoteVideoRef}
         autoPlay
         playsInline
-        className={`absolute inset-0 w-full h-full ${isMinimized ? 'object-cover' : 'object-contain'}`}
+        className={`absolute inset-0 w-full h-full scale-x-[-1] ${isMinimized ? 'object-cover' : 'object-contain'}`}
         style={{ background: '#000' }}
       />
 
@@ -443,7 +443,7 @@ const VideoCallModal = ({
       {/* Local video PiP */}
       {!isMinimized && (
         <div className="absolute top-6 right-6 w-32 h-44 sm:w-44 sm:h-60 rounded-2xl overflow-hidden border-2 border-white/30 shadow-2xl z-10">
-          <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+          <video ref={localVideoRef} autoPlay playsInline muted className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`} />
           {isVideoOff && (
             <div className="absolute inset-0 bg-slate-800 flex items-center justify-center">
               <VideoOff size={24} className="text-white/60" />
