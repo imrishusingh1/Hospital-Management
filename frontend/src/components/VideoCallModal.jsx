@@ -79,6 +79,7 @@ const VideoCallModal = ({
   const [callDuration, setCallDuration] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
   const [facingMode, setFacingMode] = useState('user');
+  const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
 
   // Remote stream as React STATE — eliminates all ref timing races.
   // The useEffect below safely wires it to the video element post-commit.
@@ -157,6 +158,12 @@ const VideoCallModal = ({
       const stream = await streamPromiseRef.current;
       localStreamRef.current = stream;
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+      
+      // Check if device has multiple cameras (to show/hide switch button)
+      navigator.mediaDevices.enumerateDevices().then(devices => {
+        setHasMultipleCameras(devices.filter(d => d.kind === 'videoinput').length > 1);
+      }).catch(() => {});
+
       return stream;
     } catch (err) {
       console.error('[getUserMedia]', err);
@@ -293,20 +300,31 @@ const VideoCallModal = ({
   const switchCamera = async () => {
     try {
       const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
-      const newVideoStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: newFacingMode }
-      });
-      
-      setFacingMode(newFacingMode);
-      
-      const newVideoTrack = newVideoStream.getVideoTracks()[0];
       const oldStream = localStreamRef.current;
-      
       const oldVideoTrack = oldStream?.getVideoTracks()[0];
+      
+      // CRITICAL: On mobile (especially iOS), you must stop the active camera 
+      // before the browser will allow you to switch to the other one.
       if (oldVideoTrack) {
         oldVideoTrack.stop();
         oldStream.removeTrack(oldVideoTrack);
       }
+      
+      let newVideoStream;
+      try {
+        // Try exact facingMode first
+        newVideoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: newFacingMode } }
+        });
+      } catch (e) {
+        // Fallback to non-exact if exact fails
+        newVideoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: newFacingMode }
+        });
+      }
+      
+      setFacingMode(newFacingMode);
+      const newVideoTrack = newVideoStream.getVideoTracks()[0];
       
       if (oldStream && newVideoTrack) {
         oldStream.addTrack(newVideoTrack);
@@ -321,6 +339,20 @@ const VideoCallModal = ({
       }
     } catch (err) {
       console.error('Camera switch failed:', err);
+      // Attempt recovery of original camera
+      try {
+        const recoveryStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+        const recoveryTrack = recoveryStream.getVideoTracks()[0];
+        if (localStreamRef.current && recoveryTrack) {
+          localStreamRef.current.addTrack(recoveryTrack);
+          if (pcRef.current) {
+            const sender = pcRef.current.getSenders().find(s => s.track?.kind === 'video');
+            if (sender) await sender.replaceTrack(recoveryTrack);
+          }
+        }
+      } catch (recoveryErr) {
+        console.error('Camera recovery failed:', recoveryErr);
+      }
     }
   };
 
@@ -473,9 +505,11 @@ const VideoCallModal = ({
               <button onClick={toggleVideo} className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isVideoOff ? 'bg-rose-500 hover:bg-rose-600' : 'bg-white/20 hover:bg-white/30 backdrop-blur-md'}`}>
                 {isVideoOff ? <VideoOff size={22} /> : <Video size={22} />}
               </button>
-              <button onClick={switchCamera} className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all bg-white/20 hover:bg-white/30 backdrop-blur-md" title="Switch Camera">
-                <SwitchCamera size={22} />
-              </button>
+              {hasMultipleCameras && (
+                <button onClick={switchCamera} className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all bg-white/20 hover:bg-white/30 backdrop-blur-md" title="Switch Camera">
+                  <SwitchCamera size={22} />
+                </button>
+              )}
             </>
           )}
         </div>
