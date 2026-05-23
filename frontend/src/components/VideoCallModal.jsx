@@ -154,7 +154,20 @@ const VideoCallModal = ({
     try {
       if (localStreamRef.current) return localStreamRef.current;
       if (streamPromiseRef.current) return await streamPromiseRef.current;
-      streamPromiseRef.current = navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true });
+      const constraints = {
+        video: {
+          facingMode,
+          width: { ideal: 640, max: 1280 },
+          height: { ideal: 480, max: 720 },
+          frameRate: { ideal: 24, max: 30 }
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      };
+      streamPromiseRef.current = navigator.mediaDevices.getUserMedia(constraints);
       const stream = await streamPromiseRef.current;
       localStreamRef.current = stream;
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
@@ -314,12 +327,22 @@ const VideoCallModal = ({
       try {
         // Try exact facingMode first
         newVideoStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { exact: newFacingMode } }
+          video: { 
+            facingMode: { exact: newFacingMode },
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            frameRate: { ideal: 24, max: 30 }
+          }
         });
       } catch (e) {
         // Fallback to non-exact if exact fails
         newVideoStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: newFacingMode }
+          video: { 
+            facingMode: newFacingMode,
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            frameRate: { ideal: 24, max: 30 }
+          }
         });
       }
       
@@ -341,7 +364,14 @@ const VideoCallModal = ({
       console.error('Camera switch failed:', err);
       // Attempt recovery of original camera
       try {
-        const recoveryStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+        const recoveryStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode,
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            frameRate: { ideal: 24, max: 30 }
+          } 
+        });
         const recoveryTrack = recoveryStream.getVideoTracks()[0];
         if (localStreamRef.current && recoveryTrack) {
           localStreamRef.current.addTrack(recoveryTrack);
