@@ -38,12 +38,15 @@ io.use((socket, next) => {
   }
 });
 
-// Track userId → socketId map for direct calls
+// Track userId → Set of socketIds for multi-device support
 const userSocketMap = {};
 
 io.on('connection', (socket) => {
   const userId = socket.user?.id || socket.user?._id;
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) {
+    if (!userSocketMap[userId]) userSocketMap[userId] = new Set();
+    userSocketMap[userId].add(socket.id);
+  }
 
   // --- CHAT EVENTS ---
   socket.on('join-room', (conversationId) => {
@@ -69,53 +72,54 @@ io.on('connection', (socket) => {
 
   // --- VIDEO CALL SIGNALING EVENTS ---
   socket.on('call:initiate', ({ targetUserId, callerName, conversationId }) => {
-    const targetSocketId = userSocketMap[targetUserId];
-    if (targetSocketId) {
-      io.to(targetSocketId).emit('call:incoming', {
-        from: userId,
-        callerName,
-        conversationId,
-      });
+    const sockets = userSocketMap[targetUserId];
+    if (sockets) {
+      sockets.forEach(sid => io.to(sid).emit('call:incoming', { from: userId, callerName, conversationId }));
     }
   });
 
   socket.on('call:offer', ({ targetUserId, offer }) => {
-    const targetSocketId = userSocketMap[targetUserId];
-    if (targetSocketId) {
-      io.to(targetSocketId).emit('call:offer', { from: userId, offer });
+    const sockets = userSocketMap[targetUserId];
+    if (sockets) {
+      sockets.forEach(sid => io.to(sid).emit('call:offer', { from: userId, offer }));
     }
   });
 
   socket.on('call:answer', ({ targetUserId, answer }) => {
-    const targetSocketId = userSocketMap[targetUserId];
-    if (targetSocketId) {
-      io.to(targetSocketId).emit('call:answer', { from: userId, answer });
+    const sockets = userSocketMap[targetUserId];
+    if (sockets) {
+      sockets.forEach(sid => io.to(sid).emit('call:answer', { from: userId, answer }));
     }
   });
 
   socket.on('call:ice-candidate', ({ targetUserId, candidate }) => {
-    const targetSocketId = userSocketMap[targetUserId];
-    if (targetSocketId) {
-      io.to(targetSocketId).emit('call:ice-candidate', { from: userId, candidate });
+    const sockets = userSocketMap[targetUserId];
+    if (sockets) {
+      sockets.forEach(sid => io.to(sid).emit('call:ice-candidate', { from: userId, candidate }));
     }
   });
 
   socket.on('call:end', ({ targetUserId }) => {
-    const targetSocketId = userSocketMap[targetUserId];
-    if (targetSocketId) {
-      io.to(targetSocketId).emit('call:end');
+    const sockets = userSocketMap[targetUserId];
+    if (sockets) {
+      sockets.forEach(sid => io.to(sid).emit('call:end'));
     }
   });
 
   socket.on('call:reject', ({ targetUserId }) => {
-    const targetSocketId = userSocketMap[targetUserId];
-    if (targetSocketId) {
-      io.to(targetSocketId).emit('call:rejected');
+    const sockets = userSocketMap[targetUserId];
+    if (sockets) {
+      sockets.forEach(sid => io.to(sid).emit('call:rejected'));
     }
   });
 
   socket.on('disconnect', () => {
-    if (userId) delete userSocketMap[userId];
+    if (userId && userSocketMap[userId]) {
+      userSocketMap[userId].delete(socket.id);
+      if (userSocketMap[userId].size === 0) {
+        delete userSocketMap[userId];
+      }
+    }
   });
 });
 
