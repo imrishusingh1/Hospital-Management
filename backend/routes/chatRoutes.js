@@ -11,6 +11,8 @@ const {
   uploadAttachment,
   markRead,
 } = require('../controllers/chatController');
+const { getIceServers } = require('../controllers/iceController');
+
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads/chat');
@@ -38,8 +40,10 @@ const upload = multer({
 
 router.get('/conversations', protect, getConversations);
 router.get('/messages/:conversationId', protect, getMessages);
+router.get('/ice-servers', protect, getIceServers);
 router.post('/send', protect, sendMessage);
 router.post('/upload', protect, upload.single('file'), uploadAttachment);
 router.post('/mark-read/:conversationId', protect, markRead);
 
 module.exports = router;
+
