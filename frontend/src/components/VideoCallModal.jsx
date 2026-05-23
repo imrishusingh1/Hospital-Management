@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, Phone } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, Phone, Minimize2, Maximize2 } from 'lucide-react';
 import api from '../services/api';
 
 // ─── Ringtone ─────────────────────────────────────────────────────────────────
@@ -75,7 +75,9 @@ const VideoCallModal = ({
   const [isMuted,      setIsMuted]      = useState(false);
   const [isVideoOff,   setIsVideoOff]   = useState(false);
   const [hasConnected, setHasConnected] = useState(false);
+  const hasConnectedRef = useRef(false);
   const [callDuration, setCallDuration] = useState(0);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   // Remote stream as React STATE — eliminates all ref timing races.
   // The useEffect below safely wires it to the video element post-commit.
@@ -85,8 +87,6 @@ const VideoCallModal = ({
   useEffect(() => {
     const videoEl = remoteVideoRef.current;
     if (!videoEl || !remoteStream) return;
-    console.log('[WebRTC] Attaching remote stream', remoteStream.id,
-      'tracks:', remoteStream.getTracks().map(t => t.kind));
     videoEl.srcObject = remoteStream;
     videoEl.play().catch(err =>
       console.warn('[WebRTC] remoteVideo.play() blocked:', err.name));
@@ -139,9 +139,7 @@ const VideoCallModal = ({
     try {
       const res = await api.get('/chat/ice-servers');
       const config = { iceServers: res.data.iceServers };
-      if (res.data.warning) console.warn('[ICE]', res.data.warning);
       iceConfigRef.current = config;
-      console.log('[ICE] Using servers:', config.iceServers.map(s => s.urls).flat());
       return config;
     } catch (err) {
       console.warn('[ICE] Could not fetch from backend, using STUN-only fallback:', err.message);
@@ -221,7 +219,6 @@ const VideoCallModal = ({
     // guaranteeing the DOM node is ready and the browser autoplay policy
     // is satisfied (element is visible in the document).
     pc.ontrack = (e) => {
-      console.log('[WebRTC] ontrack — kind:', e.track.kind, 'streams:', e.streams.length);
       if (e.streams?.[0]) {
         setRemoteStream(e.streams[0]);
       } else if (e.track) {
@@ -262,6 +259,7 @@ const VideoCallModal = ({
 
     setCallState('connected');
     setHasConnected(true);
+    hasConnectedRef.current = true;
     startTimer();
 
     const [stream, iceConfig] = await Promise.all([startLocalStream(), getIceConfig()]);
@@ -283,8 +281,8 @@ const VideoCallModal = ({
 
   const endCall = () => {
     socket.emit('call:end', { targetUserId });
-    if (!hasConnected && !isIncoming && onCallLog) onCallLog('Missed Video Call');
-    if (hasConnected && onCallLog) onCallLog(`Video Call Ended • ${formatDuration(callDuration)}`);
+    if (!hasConnectedRef.current && !isIncoming && onCallLog) onCallLog('Missed Video Call');
+    if (hasConnectedRef.current && onCallLog) onCallLog(`Video Call Ended • ${formatDuration(callDuration)}`);
     cleanup(); onClose();
   };
 
@@ -302,6 +300,7 @@ const VideoCallModal = ({
         await setRemoteDescAndFlush(pcRef.current, answer);
         setCallState('connected');
         setHasConnected(true);
+        hasConnectedRef.current = true;
         startTimer();
       }
     };
@@ -315,7 +314,7 @@ const VideoCallModal = ({
       }
     };
 
-    const onCallEnd      = () => { if (!hasConnected && isIncoming && onCallLog) onCallLog('Missed Video Call'); cleanup(); onClose(); };
+    const onCallEnd      = () => { if (!hasConnectedRef.current && isIncoming && onCallLog) onCallLog('Missed Video Call'); cleanup(); onClose(); };
     const onCallRejected = () => { if (!isIncoming && onCallLog) onCallLog('Missed Video Call'); cleanup(); onClose(); };
 
     socket.on('call:answer',        onAnswer);
@@ -348,75 +347,104 @@ const VideoCallModal = ({
 
   // ─── UI ───────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center">
-
+    <div 
+      className={`fixed z-[9999] flex flex-col items-center justify-center transition-all duration-300 ${
+        isMinimized 
+          ? 'bottom-6 right-6 w-36 h-52 sm:w-48 sm:h-72 rounded-2xl overflow-hidden shadow-2xl bg-black cursor-pointer border border-slate-700 hover:border-brand-500' 
+          : 'inset-0 bg-black'
+      }`}
+      onClick={() => isMinimized && setIsMinimized(false)}
+    >
       {/* Remote video — always in DOM, srcObject managed by useEffect */}
       <video
         ref={remoteVideoRef}
         autoPlay
         playsInline
-        className="absolute inset-0 w-full h-full object-cover"
+        className={`absolute inset-0 w-full h-full ${isMinimized ? 'object-cover' : 'object-contain'}`}
         style={{ background: '#000' }}
       />
 
+      {isMinimized && (
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+          <Maximize2 size={24} className="text-white drop-shadow-lg" />
+        </div>
+      )}
+
       {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
+      {!isMinimized && <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70 pointer-events-none" />}
 
       {/* Local video PiP */}
-      <div className="absolute top-6 right-6 w-32 h-44 sm:w-44 sm:h-60 rounded-2xl overflow-hidden border-2 border-white/30 shadow-2xl z-10">
-        <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-        {isVideoOff && (
-          <div className="absolute inset-0 bg-slate-800 flex items-center justify-center">
-            <VideoOff size={24} className="text-white/60" />
-          </div>
-        )}
-      </div>
+      {!isMinimized && (
+        <div className="absolute top-6 right-6 w-32 h-44 sm:w-44 sm:h-60 rounded-2xl overflow-hidden border-2 border-white/30 shadow-2xl z-10">
+          <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+          {isVideoOff && (
+            <div className="absolute inset-0 bg-slate-800 flex items-center justify-center">
+              <VideoOff size={24} className="text-white/60" />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Header */}
-      <div className="absolute top-6 left-6 z-10 text-white">
-        <p className="text-xs uppercase tracking-widest text-white/60 mb-1">
-          {callState === 'incoming' ? 'Incoming Call' : callState === 'ringing' ? 'Calling...' : callState === 'connected' ? 'Connected' : ''}
-        </p>
-        <h2 className="text-2xl font-bold">{targetUser?.name || 'Unknown'}</h2>
-        {callState === 'connected' && (
-          <p className="text-sm text-emerald-400 mt-1 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" />
-            Live
-            <span className="font-mono text-white/80 bg-white/10 px-2 py-0.5 rounded-full text-xs tracking-widest">
-              {formatDuration(callDuration)}
-            </span>
-          </p>
-        )}
-      </div>
+      {!isMinimized && (
+        <div className="absolute top-6 left-6 z-10 text-white flex gap-4 items-start">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-white/60 mb-1">
+              {callState === 'incoming' ? 'Incoming Call' : callState === 'ringing' ? 'Calling...' : callState === 'connected' ? 'Connected' : ''}
+            </p>
+            <h2 className="text-2xl font-bold">{targetUser?.name || 'Unknown'}</h2>
+            {callState === 'connected' && (
+              <p className="text-sm text-emerald-400 mt-1 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                Live
+                <span className="font-mono text-white/80 bg-white/10 px-2 py-0.5 rounded-full text-xs tracking-widest">
+                  {formatDuration(callDuration)}
+                </span>
+              </p>
+            )}
+          </div>
+          {callState === 'connected' && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}
+              className="mt-1 p-2 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm transition-colors text-white"
+              title="Minimize to chat"
+            >
+              <Minimize2 size={20} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Controls */}
-      <div className="absolute bottom-10 z-10 flex items-center gap-6">
-        {callState === 'incoming' ? (
-          <>
-            <button onClick={rejectCall} className="w-16 h-16 rounded-full bg-rose-500 hover:bg-rose-600 flex items-center justify-center text-white shadow-xl transition-all">
-              <PhoneOff size={28} />
-            </button>
-            <button onClick={acceptCall} className="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white shadow-xl transition-all animate-pulse">
-              <Phone size={28} />
-            </button>
-          </>
-        ) : (
-          <>
-            <button onClick={toggleMute} className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isMuted ? 'bg-rose-500 hover:bg-rose-600' : 'bg-white/20 hover:bg-white/30 backdrop-blur-md'}`}>
-              {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
-            </button>
-            <button onClick={endCall} className="w-20 h-20 rounded-full bg-rose-500 hover:bg-rose-600 flex items-center justify-center text-white shadow-2xl transition-all">
-              <PhoneOff size={30} />
-            </button>
-            <button onClick={toggleVideo} className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isVideoOff ? 'bg-rose-500 hover:bg-rose-600' : 'bg-white/20 hover:bg-white/30 backdrop-blur-md'}`}>
-              {isVideoOff ? <VideoOff size={22} /> : <Video size={22} />}
-            </button>
-          </>
-        )}
-      </div>
+      {!isMinimized && (
+        <div className="absolute bottom-10 z-10 flex items-center gap-6">
+          {callState === 'incoming' ? (
+            <>
+              <button onClick={rejectCall} className="w-16 h-16 rounded-full bg-rose-500 hover:bg-rose-600 flex items-center justify-center text-white shadow-xl transition-all">
+                <PhoneOff size={28} />
+              </button>
+              <button onClick={acceptCall} className="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white shadow-xl transition-all animate-pulse">
+                <Phone size={28} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={toggleMute} className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isMuted ? 'bg-rose-500 hover:bg-rose-600' : 'bg-white/20 hover:bg-white/30 backdrop-blur-md'}`}>
+                {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
+              </button>
+              <button onClick={endCall} className="w-20 h-20 rounded-full bg-rose-500 hover:bg-rose-600 flex items-center justify-center text-white shadow-2xl transition-all">
+                <PhoneOff size={30} />
+              </button>
+              <button onClick={toggleVideo} className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isVideoOff ? 'bg-rose-500 hover:bg-rose-600' : 'bg-white/20 hover:bg-white/30 backdrop-blur-md'}`}>
+                {isVideoOff ? <VideoOff size={22} /> : <Video size={22} />}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Waiting animation */}
-      {(callState === 'calling' || callState === 'ringing') && (
+      {!isMinimized && (callState === 'calling' || callState === 'ringing') && (
         <div className="relative z-10 flex flex-col items-center">
           <div className="relative mb-8">
             <div className="w-28 h-28 rounded-full bg-white/10 border-2 border-white/30 flex items-center justify-center text-5xl">👤</div>

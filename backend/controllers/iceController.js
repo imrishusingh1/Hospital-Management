@@ -50,7 +50,6 @@ exports.getIceServers = (req, res) => {
       { urls: `turns:${host}:${tlsPort}?transport=tcp`, username, credential: password },
     ];
 
-    console.log(`[ICE] Generated TURN credentials for ${userId}, expires in ${ttlHours}h`);
     return res.json({ iceServers });
   }
 
