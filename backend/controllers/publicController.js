@@ -1,4 +1,5 @@
 const Doctor = require('../models/Doctor');
+const Subscriber = require('../models/Subscriber');
 
 function pickAvatar(doctor) {
   return doctor.avatar || '';
@@ -34,6 +35,27 @@ exports.getPublicDoctors = async (req, res, next) => {
       }));
 
     res.status(200).json({ success: true, count: data.length, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Subscribe to newsletter
+// @route   POST /api/public/subscribe
+exports.subscribeNewsletter = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const existing = await Subscriber.findOne({ email: email.toLowerCase().trim() });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'You are already subscribed!' });
+    }
+
+    await Subscriber.create({ email });
+    res.status(201).json({ success: true, message: 'Successfully subscribed to the newsletter!' });
   } catch (error) {
     next(error);
   }

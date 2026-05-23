@@ -94,12 +94,18 @@ const Landing = () => {
     }
   };
 
-  const handleNewsletterSubmit = (e) => {
+  const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     const emailInput = e.target.querySelector('input');
-    if (emailInput.value) {
-      toast.success("Thanks for subscribing to our newsletter!");
-      emailInput.value = '';
+    const email = emailInput.value.trim();
+    if (email) {
+      try {
+        const res = await api.post('/public/subscribe', { email });
+        toast.success(res.data.message || "Thanks for subscribing to our newsletter!");
+        emailInput.value = '';
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to subscribe.");
+      }
     } else {
       toast.error("Please enter your email address.");
     }
@@ -924,7 +930,9 @@ const Landing = () => {
                   </div>
                   <span className="text-2xl font-bold tracking-tight">Curalync</span>
                 </div>
-                <p className="text-white/70 mb-8 text-sm leading-relaxed">A comprehensive hospital management platform providing seamless healthcare experiences.</p>
+                <p className="text-white/70 mb-8 text-sm leading-relaxed">
+                  Subscribe to health newsletters from Curalync. Receive updates about new features added to the platform. Get notified about special health campaigns or announcements.
+                </p>
                 
                 {/* Newsletter Input */}
                 <form onSubmit={handleNewsletterSubmit} className="flex items-center bg-white/10 border border-white/20 rounded-full p-1.5 w-full max-w-sm">
@@ -972,7 +980,7 @@ const Landing = () => {
 
             {/* Bottom Bar */}
             <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-white/70">
-              <p>Copyright@2026 &nbsp;&bull;&nbsp; Built with MERN Stack</p>
+              <p>Copyright@2026 &nbsp;&bull;&nbsp; Empowering Next-Gen Healthcare</p>
               <div className="flex items-center mt-4 md:mt-0">
                 <span className="mr-3">Developed by</span>
                 <div className="flex items-center text-white font-medium">
