@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, Phone, Minimize2, Maximize2 } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, Phone, Minimize2, Maximize2, SwitchCamera } from 'lucide-react';
 import api from '../services/api';
 
 // ─── Ringtone ─────────────────────────────────────────────────────────────────
@@ -78,6 +78,7 @@ const VideoCallModal = ({
   const hasConnectedRef = useRef(false);
   const [callDuration, setCallDuration] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [facingMode, setFacingMode] = useState('user');
 
   // Remote stream as React STATE — eliminates all ref timing races.
   // The useEffect below safely wires it to the video element post-commit.
@@ -152,7 +153,7 @@ const VideoCallModal = ({
     try {
       if (localStreamRef.current) return localStreamRef.current;
       if (streamPromiseRef.current) return await streamPromiseRef.current;
-      streamPromiseRef.current = navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      streamPromiseRef.current = navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true });
       const stream = await streamPromiseRef.current;
       localStreamRef.current = stream;
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
@@ -288,6 +289,40 @@ const VideoCallModal = ({
 
   const toggleMute  = () => { localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = !t.enabled; }); setIsMuted(p => !p); };
   const toggleVideo = () => { localStreamRef.current?.getVideoTracks().forEach(t => { t.enabled = !t.enabled; }); setIsVideoOff(p => !p); };
+
+  const switchCamera = async () => {
+    try {
+      const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+      const newVideoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: newFacingMode }
+      });
+      
+      setFacingMode(newFacingMode);
+      
+      const newVideoTrack = newVideoStream.getVideoTracks()[0];
+      const oldStream = localStreamRef.current;
+      
+      const oldVideoTrack = oldStream?.getVideoTracks()[0];
+      if (oldVideoTrack) {
+        oldVideoTrack.stop();
+        oldStream.removeTrack(oldVideoTrack);
+      }
+      
+      if (oldStream && newVideoTrack) {
+        oldStream.addTrack(newVideoTrack);
+        if (isVideoOff) newVideoTrack.enabled = false;
+      }
+      
+      if (pcRef.current && newVideoTrack) {
+        const sender = pcRef.current.getSenders().find(s => s.track?.kind === 'video');
+        if (sender) {
+          await sender.replaceTrack(newVideoTrack);
+        }
+      }
+    } catch (err) {
+      console.error('Camera switch failed:', err);
+    }
+  };
 
   // ── Socket listeners ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -437,6 +472,9 @@ const VideoCallModal = ({
               </button>
               <button onClick={toggleVideo} className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isVideoOff ? 'bg-rose-500 hover:bg-rose-600' : 'bg-white/20 hover:bg-white/30 backdrop-blur-md'}`}>
                 {isVideoOff ? <VideoOff size={22} /> : <Video size={22} />}
+              </button>
+              <button onClick={switchCamera} className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all bg-white/20 hover:bg-white/30 backdrop-blur-md" title="Switch Camera">
+                <SwitchCamera size={22} />
               </button>
             </>
           )}
