@@ -229,3 +229,65 @@ exports.approveRequest = async (req, res, next) => {
   }
 };
 
+// GET /api/approvals/pending
+// Admin only
+exports.getPendingApprovals = async (req, res, next) => {
+  try {
+    const approvals = await ApprovalRequest.find({ status: 'Pending' }).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: approvals });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/approvals/:id/approve
+// Admin only
+exports.approveApprovalRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const approval = await ApprovalRequest.findById(id);
+    if (!approval) return res.status(404).json({ success: false, message: 'Approval request not found.' });
+    if (approval.status !== 'Pending') return res.status(400).json({ success: false, message: `Request is already ${approval.status}.` });
+
+    if (approval.role === 'Admin') {
+      const canCreate = await ensureNoActiveAdmin();
+      if (!canCreate) return res.status(409).json({ success: false, message: 'An active Admin already exists.' });
+      const { email, password } = approval.payload || {};
+      const user = await User.create({ email, password, role: 'Admin', status: 'Active' });
+      approval.status = 'Approved';
+      await approval.save();
+      return res.status(200).json({ success: true, message: `Approved. Admin created: ${user.email}` });
+    }
+
+    if (approval.role === 'Doctor') {
+      const { email, password, profileData } = approval.payload || {};
+      const doctorUser = await User.create({ email, password, role: 'Doctor', status: 'Active' });
+      await Doctor.create({ userId: doctorUser._id, ...(profileData || {}) });
+      approval.status = 'Approved';
+      await approval.save();
+      return res.status(200).json({ success: true, message: `Approved. Doctor created: ${doctorUser.email}` });
+    }
+
+    return res.status(400).json({ success: false, message: 'Unsupported role or action.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/approvals/:id/reject
+// Admin only
+exports.rejectApprovalRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const approval = await ApprovalRequest.findById(id);
+    if (!approval) return res.status(404).json({ success: false, message: 'Approval request not found.' });
+    if (approval.status !== 'Pending') return res.status(400).json({ success: false, message: `Request is already ${approval.status}.` });
+
+    approval.status = 'Rejected';
+    await approval.save();
+    return res.status(200).json({ success: true, message: 'Request rejected successfully.' });
+  } catch (error) {
+    next(error);
+  }
+};
+

@@ -12,6 +12,7 @@ const doctorSchema = new mongoose.Schema({
   department: { type: String },
   bio: { type: String },
   avatar: { type: String },
+  verificationDocument: { type: String },
   qualifications: { type: [String], required: true },
   experienceYears: { type: Number, required: true },
   contactNumber: { type: String, required: true },

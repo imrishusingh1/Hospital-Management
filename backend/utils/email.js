@@ -92,9 +92,38 @@ async function sendAppointmentEmail({ to, subject, details }) {
   return { emailSent: true };
 }
 
+async function sendPasswordResetEmail({ to, resetUrl }) {
+  if (!isSmtpConfigured()) {
+    console.warn('[email] SMTP not configured. Password reset link:', resetUrl);
+    return { emailSent: false };
+  }
+  
+  const transporter = getTransporter();
+  const from = getOpt('SMTP_FROM', process.env.SMTP_USER);
+
+  const text = [
+    'You requested a password reset.',
+    '',
+    `Please click the link below to reset your password:`,
+    resetUrl,
+    '',
+    'If you did not request this, please ignore this email.'
+  ].join('\n');
+
+  await transporter.sendMail({
+    from,
+    to,
+    subject: 'Password Reset Request',
+    text,
+  });
+  
+  return { emailSent: true };
+}
+
 module.exports = {
   sendApprovalEmail,
   buildApprovalLink,
   isSmtpConfigured,
-  sendAppointmentEmail
+  sendAppointmentEmail,
+  sendPasswordResetEmail
 };

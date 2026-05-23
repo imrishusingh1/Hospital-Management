@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import AdminDashboard from './pages/AdminDashboard';
 
 import Landing from './pages/Landing';
@@ -51,6 +52,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/doctor-profile/:id" element={<PublicDoctorProfile />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/approve" element={<ApprovalStatus />} />
           
           {/* Admin Routes */}

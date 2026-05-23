@@ -8,6 +8,7 @@ import { User, Mail, Lock, Stethoscope, Shield, HeartPulse, ArrowLeft } from 'lu
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [role, setRole] = useState('Patient'); // Patient, Doctor, Admin
   
   // Form State
@@ -23,6 +24,8 @@ const Login = () => {
   const [qualifications, setQualifications] = useState('');
   const [experienceYears, setExperienceYears] = useState('');
   const [consultationFee, setConsultationFee] = useState('');
+  const [verificationDocument, setVerificationDocument] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { login, register, resetAuth } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -72,10 +75,27 @@ const Login = () => {
           navigate('/patient');
         } else if (role === 'Doctor') {
           // Doctor requires approval
-          if (!specialization || !qualifications || !experienceYears || !consultationFee || !contactNumber) {
-            toast.error('Please fill doctor profile details.');
+          if (!specialization || !qualifications || !experienceYears || !consultationFee || !contactNumber || !verificationDocument) {
+            toast.error('Please fill doctor profile details and upload your verification document.');
             return;
           }
+
+          setIsUploading(true);
+          let documentUrl = '';
+          try {
+            const formData = new FormData();
+            formData.append('document', verificationDocument);
+            const uploadRes = await api.post('/upload/document', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            documentUrl = uploadRes.data.url;
+          } catch (error) {
+            setIsUploading(false);
+            toast.error('Failed to upload verification document');
+            return;
+          }
+          setIsUploading(false);
+
           const doctorRequest = {
             email,
             password,
@@ -89,6 +109,7 @@ const Login = () => {
             experienceYears: Number(experienceYears),
             contactNumber,
             consultationFee: Number(consultationFee),
+            verificationDocument: documentUrl,
           };
           const { data: approvalRes } = await api.post('/approvals/doctor', doctorRequest);
           if (approvalRes.emailSent) {
@@ -142,6 +163,21 @@ const Login = () => {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    try {
+      await api.post('/auth/forgot-password', { email });
+      toast.success('If an account exists, a reset link was sent to your email.');
+      setIsForgotPassword(false);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send reset link');
+    }
+  };
+
   return (
     <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 p-4 overflow-hidden font-sans">
       
@@ -168,12 +204,14 @@ const Login = () => {
             </div>
             <h2 className="text-3xl font-bold text-white tracking-tight">Curalync</h2>
             <p className="text-white/70 mt-2 text-sm">
-              {isLogin ? 'Welcome back to your healthcare portal' : 'Create your account to get started'}
+              {isForgotPassword ? 'Reset your password' : isLogin ? 'Welcome back to your healthcare portal' : 'Create your account to get started'}
             </p>
           </div>
 
-          {/* Role Selector (Segmented Control) */}
-          <div className="flex bg-black/20 p-1 rounded-full mb-8 relative">
+          {!isForgotPassword && (
+            <>
+              {/* Role Selector (Segmented Control) */}
+              <div className="flex bg-black/20 p-1 rounded-full mb-8 relative">
             <button
               type="button"
               onClick={() => setRole('Patient')}
@@ -202,8 +240,28 @@ const Login = () => {
               Doctor and Admin signups require manual approval by the system owner. You’ll be able to log in after approval.
             </div>
           )}
+          </>
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-4 relative">
+          {isForgotPassword ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4 relative">
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50" size={18} />
+                <input
+                  type="email"
+                  required
+                  placeholder="Email Address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl pl-11 pr-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
+                />
+              </div>
+              <button type="submit" className="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-colors shadow-lg mt-2">
+                Send Reset Link
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4 relative">
             <AnimatePresence mode="wait">
               {!isLogin && (
                 <motion.div
@@ -260,6 +318,18 @@ const Login = () => {
                 className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl pl-11 pr-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
               />
             </div>
+            
+            {isLogin && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(true)}
+                  className="text-white/70 hover:text-white text-sm transition-colors"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
 
             {!isLogin && role === 'Patient' && (
               <>
@@ -342,26 +412,50 @@ const Login = () => {
                   onChange={(e) => setContactNumber(e.target.value)}
                   className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl px-4 py-3.5 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm"
                 />
+                <div className="flex flex-col space-y-1">
+                  <label className="text-white/70 text-sm ml-1">Verification Document (PDF)</label>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    required
+                    onChange={(e) => setVerificationDocument(e.target.files[0])}
+                    className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl px-4 py-2 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/50 transition-all text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white file:text-brand-600 hover:file:bg-brand-50"
+                  />
+                </div>
               </>
             )}
 
-            <button type="submit" className="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-colors shadow-lg mt-2">
-              {isLogin ? `Sign In as ${role}` : 'Create Account'}
+            <button type="submit" disabled={isUploading} className="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-colors shadow-lg mt-2 disabled:opacity-70">
+              {isUploading ? 'Uploading Document...' : isLogin ? `Sign In as ${role}` : 'Create Account'}
             </button>
           </form>
+          )}
 
-          {/* Toggle Login/Signup */}
+          {/* Toggle Login/Signup/Forgot Password */}
           <div className="mt-8 text-center border-t border-white/10 pt-6">
-            <p className="text-white/70 text-sm">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}
-              <button 
-                type="button"
-                onClick={() => setIsLogin(!isLogin)} 
-                className="ml-2 text-white font-bold hover:underline"
-              >
-                {isLogin ? 'Sign Up' : 'Sign In'}
-              </button>
-            </p>
+            {isForgotPassword ? (
+              <p className="text-white/70 text-sm">
+                Remember your password?
+                <button 
+                  type="button"
+                  onClick={() => setIsForgotPassword(false)} 
+                  className="ml-2 text-white font-bold hover:underline"
+                >
+                  Back to Login
+                </button>
+              </p>
+            ) : (
+              <p className="text-white/70 text-sm">
+                {isLogin ? "Don't have an account?" : "Already have an account?"}
+                <button 
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)} 
+                  className="ml-2 text-white font-bold hover:underline"
+                >
+                  {isLogin ? 'Sign Up' : 'Sign In'}
+                </button>
+              </p>
+            )}
           </div>
 
         </div>
