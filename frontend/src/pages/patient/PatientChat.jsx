@@ -38,6 +38,7 @@ const ChatPage = () => {
   // Buffer the SDP offer so it is never lost even if call:offer arrives
   // before the VideoCallModal has mounted and registered its own listener.
   const pendingOfferRef = useRef(null);
+  const pendingIceCandidatesRef = useRef([]); // Add buffer for ICE candidates
 
   useEffect(() => {
     activeConvRef.current = activeConv;
@@ -112,6 +113,11 @@ const ChatPage = () => {
       setCallState(prev => prev ? { ...prev, offer } : null);
     });
 
+    socket.on('call:ice-candidate', ({ from, candidate }) => {
+      // Buffer the candidate so VideoCallModal can pick it up even if it hasn't mounted yet
+      pendingIceCandidatesRef.current.push(candidate);
+    });
+
     return () => {
       socket.off('new-message', onNewMessage);
       socket.off('typing');
@@ -119,6 +125,7 @@ const ChatPage = () => {
       socket.off('messages-read');
       socket.off('call:incoming');
       socket.off('call:offer');
+      socket.off('call:ice-candidate');
     };
   }, []); // Run ONCE, we use refs inside listeners to prevent stale closures
 
@@ -287,6 +294,7 @@ const ChatPage = () => {
           targetUserId={callState.targetUserId}
           isIncoming={callState.type === 'incoming'}
           incomingOffer={callState.offer}
+          pendingIceCandidatesRef={pendingIceCandidatesRef}
           onClose={() => setCallState(null)}
           onCallLog={(text) => sendMessage(text, null, true)}
         />

@@ -54,6 +54,7 @@ const VideoCallModal = ({
   targetUserId: propTargetUserId,
   isIncoming,
   incomingOffer,
+  pendingIceCandidatesRef,
   onClose,
   onCallLog,
 }) => {
@@ -321,12 +322,22 @@ const VideoCallModal = ({
     socket.on('call:end',           onCallEnd);
     socket.on('call:rejected',      onCallRejected);
 
+    // Flush any candidates that arrived before we mounted
+    const flushInterval = setInterval(() => {
+      if (pendingIceCandidatesRef?.current?.length > 0) {
+        const candidates = [...pendingIceCandidatesRef.current];
+        pendingIceCandidatesRef.current = [];
+        candidates.forEach(c => onIceCandidate({ candidate: c }));
+      }
+    }, 200);
+
     if (!isIncoming && !hasInitiatedRef.current) {
       hasInitiatedRef.current = true;
       initiateCall();
     }
 
     return () => {
+      clearInterval(flushInterval);
       socket.off('call:answer',        onAnswer);
       socket.off('call:ice-candidate', onIceCandidate);
       socket.off('call:end',           onCallEnd);
