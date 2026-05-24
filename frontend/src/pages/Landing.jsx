@@ -987,7 +987,7 @@ const Landing = () => {
                   Founder & CEO: <a href="https://www.rishurajput.com" target="_blank" rel="noopener noreferrer" className="ml-1 hover:text-[#1db1d7] transition-colors underline decoration-white/30 underline-offset-4">Rishu Singh Rajput</a>
                 </div>
                 <div className="text-white/50 text-xs mt-2 max-w-md hidden md:block">
-                  A premium project by <a href="https://www.rishurajput.com" className="hover:text-[#1db1d7] transition-colors">Rishu Rajput</a>, an elite <a href="https://www.rishurajput.com" className="hover:text-[#1db1d7] transition-colors">Rishu Rajput developer</a> and <a href="https://www.rishurajput.com" className="hover:text-[#1db1d7] transition-colors">Rishu Rajput engineer</a>, dedicated to building world-class enterprise applications.
+                  An enterprise-grade healthcare platform architected by <a href="https://www.rishurajput.com" className="hover:text-[#1db1d7] transition-colors">Rishu Rajput</a>. Explore the portfolio of an elite <a href="https://www.rishurajput.com" className="hover:text-[#1db1d7] transition-colors">Rishu Rajput developer</a> and visionary <a href="https://www.rishurajput.com" className="hover:text-[#1db1d7] transition-colors">Rishu Rajput engineer</a> shaping the future of digital experiences.
                 </div>
               </div>
             </div>
