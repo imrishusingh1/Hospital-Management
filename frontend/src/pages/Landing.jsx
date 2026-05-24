@@ -185,17 +185,17 @@ const Landing = () => {
           {/* Left Text */}
           <div className="pr-0 lg:pr-12 text-center lg:text-left">
             <div className="flex items-center justify-center lg:justify-start space-x-2 text-white font-medium mb-6 uppercase tracking-wider text-sm opacity-90">
-              <span>TRUE 24/7</span>
+              <span>ENTERPRISE-GRADE</span>
               <span className="text-white/40">|</span>
-              <span>CARE WHEN IT COUNTS</span>
+              <span>PREMIUM HEALTHCARE</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-[5rem] font-bold leading-[1.05] tracking-tight mb-8 font-display">
-              Real doctors, <br />real care always.
+              Elite healthcare, <br />uncompromising quality.
             </h1>
             
             <p className="text-base sm:text-lg text-white/80 mb-10 max-w-lg leading-relaxed font-light mx-auto lg:mx-0">
-              Discover experienced doctors, compare specialties, and book trusted appointments easily online.
+              Access an exclusive network of world-class medical specialists, experience unparalleled concierge service, and manage your health with our state-of-the-art enterprise platform.
             </p>
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
@@ -331,7 +331,7 @@ const Landing = () => {
               About Curalync
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-slate-900 tracking-tight leading-tight">
-              We are a modern healthcare team focused on connecting you with trusted doctors and making quality care easy, clear, and accessible anytime.
+              We are a premier healthcare network connecting you with globally recognized specialists to provide unparalleled, enterprise-grade care tailored to your exact needs.
             </h2>
           </div>
 
@@ -410,7 +410,7 @@ const Landing = () => {
               Our Services
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
-              All your healthcare <br />needs, one place.
+              Comprehensive care,<br />elevated for you.
             </h2>
           </div>
 
@@ -475,7 +475,7 @@ const Landing = () => {
             <span className="text-sm font-medium">How it works</span>
           </div>
           <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-16 sm:mb-24">
-            Your health journey<br />in three simple steps.
+            A seamless healthcare<br />experience, redefined.
           </h2>
 
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-10 sm:gap-12">
@@ -528,7 +528,7 @@ const Landing = () => {
                 Specialized Doctors
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
-                Dedicated doctors,<br />committed to your care
+                Elite medical experts,<br />dedicated to your health
               </h2>
             </div>
             <div className="flex space-x-4 mt-8 md:mt-0 pb-4">
@@ -661,7 +661,7 @@ const Landing = () => {
               Why Curalync?
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
-              Why Choose Curalync<br />for Better Healthcare
+              Why Curalync is the Premier<br />Healthcare Choice
             </h2>
           </div>
 
@@ -764,7 +764,7 @@ const Landing = () => {
               Testimonials
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
-              Trusted by thousands<br />of happy patients.
+              Trusted by global leaders<br />for unparalleled care.
             </h2>
           </div>
 
@@ -811,7 +811,7 @@ const Landing = () => {
                 FAQ
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-slate-900 tracking-tight leading-tight mb-6">
-                Everything you<br />need to know today
+                Insights into our premier<br />medical platform
               </h2>
               <p className="text-slate-500 text-lg mb-10 max-w-md">Browse through these common inquiries to better understand our patient-focused medical platform.</p>
               <div className="flex space-x-4">
@@ -900,11 +900,11 @@ const Landing = () => {
           </div>
           
           <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight mb-8">
-            Your better health<br />journey starts here.
+            Your premium health<br />journey starts here.
           </h2>
           
           <p className="text-base sm:text-lg text-white/80 max-w-xl mx-auto mb-10 leading-relaxed">
-            Discover experienced healthcare professionals and manage all your medical visits in one convenient, secure place.
+            Discover elite healthcare professionals and manage all your medical needs with our exclusive, enterprise-grade platform.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">

@@ -204,7 +204,7 @@ const Login = () => {
             </div>
             <h2 className="text-3xl font-bold text-white tracking-tight">Curalync</h2>
             <p className="text-white/70 mt-2 text-sm">
-              {isForgotPassword ? 'Reset your password' : isLogin ? 'Welcome back to your healthcare portal' : 'Create your account to get started'}
+              {isForgotPassword ? 'Reset your password' : isLogin ? 'Welcome back to your premier healthcare portal' : 'Create your account to access elite care'}
             </p>
           </div>
 
