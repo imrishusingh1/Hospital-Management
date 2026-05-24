@@ -979,12 +979,15 @@ const Landing = () => {
             </div>
 
             {/* Bottom Bar */}
-            <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-white/70">
+            <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-white/70 gap-4">
               <p>Copyright@2026 &nbsp;&bull;&nbsp; Empowering Next-Gen Healthcare</p>
-              <div className="flex items-center mt-4 md:mt-0">
-                <span className="mr-3">Developed by</span>
-                <div className="flex items-center text-white font-medium">
-                  Rishu Singh
+              <div className="flex flex-col items-center md:items-end text-center md:text-right mt-4 md:mt-0">
+                <span className="text-white/80">Developed and Engineered by</span>
+                <div className="flex items-center text-white font-bold mt-1 text-base">
+                  Founder & CEO: <a href="https://www.rishurajput.com" target="_blank" rel="noopener noreferrer" className="ml-1 hover:text-[#1db1d7] transition-colors underline decoration-white/30 underline-offset-4">Rishu Singh Rajput</a>
+                </div>
+                <div className="text-white/50 text-xs mt-2 max-w-md hidden md:block">
+                  A premium project by <a href="https://www.rishurajput.com" className="hover:text-[#1db1d7] transition-colors">Rishu Rajput</a>, an elite <a href="https://www.rishurajput.com" className="hover:text-[#1db1d7] transition-colors">Rishu Rajput developer</a> and <a href="https://www.rishurajput.com" className="hover:text-[#1db1d7] transition-colors">Rishu Rajput engineer</a>, dedicated to building world-class enterprise applications.
                 </div>
               </div>
             </div>
